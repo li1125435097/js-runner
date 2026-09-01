@@ -1,0 +1,164 @@
+{
+  "name": "js-runner-kit",
+  "displayName": "JS Runner Kit",
+  "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
+  "version": "0.0.1",
+  "publisher": "jinkeli",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.85.0",
+    "cursor": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/li1125435097/js-runner.git"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onView:npmScriptsView",
+    "onView:runningScriptsView",
+    "workspaceContains:package.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jsRunner.runCurrentFile",
+        "title": "Run JS File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "jsRunner.runCurrentFileNewTerminal",
+        "title": "Run JS File in New Terminal",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "jsRunner.stopAll",
+        "title": "Stop All Running Scripts",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "jsRunner.stopTerminal",
+        "title": "Stop Running Script",
+        "icon": "$(close)"
+      },
+      {
+        "command": "jsRunner.refreshScripts",
+        "title": "Refresh NPM Scripts",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "jsRunner.runNpmScript",
+        "title": "Run NPM Script",
+        "icon": "$(play)"
+      },
+      {
+        "command": "jsRunner.focusRunningTerminal",
+        "title": "Focus Running Terminal",
+        "icon": "$(terminal)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jsRunner",
+          "title": "JS Runner",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "jsRunner": [
+        {
+          "id": "npmScriptsView",
+          "name": "NPM Scripts"
+        },
+        {
+          "id": "runningScriptsView",
+          "name": "Running Scripts"
+        }
+      ]
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "jsRunner.runCurrentFile",
+          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "group": "navigation@1"
+        },
+        {
+          "command": "jsRunner.runCurrentFileNewTerminal",
+          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "jsRunner.runCurrentFile",
+          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "group": "run@1"
+        },
+        {
+          "command": "jsRunner.runCurrentFileNewTerminal",
+          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "group": "run@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "jsRunner.refreshScripts",
+          "when": "view == npmScriptsView && jsRunner.active",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "jsRunner.runNpmScript",
+          "when": "view == npmScriptsView && viewItem == npmScript",
+          "group": "inline"
+        },
+        {
+          "command": "jsRunner.stopTerminal",
+          "when": "view == runningScriptsView && viewItem == runningScript",
+          "group": "inline"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "jsRunner.runCurrentFile",
+        "key": "f5",
+        "when": "editorTextFocus && (resourceLangId == javascript || resourceLangId == javascriptreact)"
+      },
+      {
+        "command": "jsRunner.runCurrentFileNewTerminal",
+        "key": "ctrl+f5",
+        "when": "editorTextFocus && (resourceLangId == javascript || resourceLangId == javascriptreact)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "install:plugin": "cursor --install-extension js-runner-0.0.1.vsix",
+    "publish": "vsce publish",
+    "publish:patch": "vsce publish patch",
+    "publish:minor": "vsce publish minor",
+    "publish:major": "vsce publish major"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "ovsx": "^1.1.1",
+    "typescript": "^5.3.3"
+  }
+}
