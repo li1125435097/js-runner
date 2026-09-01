@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
