@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import { NpmScriptsProvider } from './npmScriptsProvider';
 import { RunningScriptsProvider } from './runningScriptsProvider';
-import { NpmScriptInfo, ScriptTreeItem } from './types';
+import { NpmScriptInfo, RunningScriptTreeItem, ScriptTreeItem } from './types';
 import { TerminalManager } from './terminalManager';
 
 function resolveNpmScript(scriptOrItem: NpmScriptInfo | ScriptTreeItem): NpmScriptInfo {
   return scriptOrItem instanceof ScriptTreeItem ? scriptOrItem.script : scriptOrItem;
+}
+
+function resolveTerminalId(idOrItem: string | RunningScriptTreeItem): string {
+  return typeof idOrItem === 'string' ? idOrItem : idOrItem.runningScript.id;
 }
 
 function markExtensionActive(): void {
@@ -45,9 +49,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('jsRunner.stopAll', () => {
       terminalManager.stopAll();
     }),
-    vscode.commands.registerCommand('jsRunner.stopTerminal', (terminalId: string) => {
-      terminalManager.stopTerminal(terminalId);
-    }),
+    vscode.commands.registerCommand(
+      'jsRunner.stopTerminal',
+      (idOrItem: string | RunningScriptTreeItem) => {
+        terminalManager.stopTerminal(resolveTerminalId(idOrItem));
+      },
+    ),
     vscode.commands.registerCommand('jsRunner.focusRunningTerminal', (terminalId: string) => {
       const script = terminalManager.getRunningScripts().find((item) => item.id === terminalId);
       script?.terminal.show();

@@ -148,7 +148,7 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "package": "vsce package",
-    "install:plugin": "cursor --install-extension js-runner-0.0.1.vsix",
+    "install:plugin": "cursor --install-extension js-runner-kit-0.0.2.vsix",
     "publish": "vsce publish",
     "publish:patch": "vsce publish patch",
     "publish:minor": "vsce publish minor",
