@@ -78,7 +78,13 @@ export interface VscodeMock {
   TreeItemCollapsibleState: { None: number; Collapsed: number; Expanded: number };
   EventEmitter: typeof MockEventEmitter;
   ConfigurationTarget: { Global: number; Workspace: number; WorkspaceFolder: number };
-  Uri: { file: (filePath: string) => { fsPath: string } };
+  Uri: {
+    file: (filePath: string) => { fsPath: string; toString: () => string };
+    parse: (url: string) => { fsPath: string; toString: () => string };
+  };
+  env: {
+    openExternal: sinon.SinonStub;
+  };
   workspace: {
     workspaceFolders: Array<{ uri: { fsPath: string }; name: string }>;
     getWorkspaceFolder: (uri: { fsPath: string }) => { uri: { fsPath: string }; name: string } | undefined;
@@ -100,6 +106,7 @@ export interface VscodeMock {
     onDidCloseTerminal: (listener: (terminal: MockTerminal) => void) => { dispose: () => void };
     showInputBox: sinon.SinonStub;
     showWarningMessage: sinon.SinonStub;
+    showErrorMessage: sinon.SinonStub;
     __createdTerminals: MockTerminal[];
     __closeTerminal: (terminal: MockTerminal) => void;
   };
@@ -137,7 +144,17 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
       WorkspaceFolder: 3,
     },
     Uri: {
-      file: (filePath: string) => ({ fsPath: filePath }),
+      file: (filePath: string) => ({
+        fsPath: filePath,
+        toString: () => filePath,
+      }),
+      parse: (url: string) => ({
+        fsPath: url,
+        toString: () => url,
+      }),
+    },
+    env: {
+      openExternal: sinon.stub().resolves(true),
     },
     workspace: {
       workspaceFolders: options.workspaceFolders ?? [],
@@ -197,6 +214,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         warningMessageIndex += 1;
         return response;
       }),
+      showErrorMessage: sinon.stub().resolves(undefined),
       __createdTerminals: createdTerminals,
       __closeTerminal: (terminal: MockTerminal) => {
         for (const listener of closeTerminalListeners) {

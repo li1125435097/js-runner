@@ -8,6 +8,7 @@ const mocha = new Mocha({
 });
 
 const testsRoot = path.resolve(__dirname, 'unit');
+mocha.addFile(path.join(testsRoot, 'htmlFileOpener.test.js'));
 mocha.addFile(path.join(testsRoot, 'interpreterConfig.test.js'));
 mocha.addFile(path.join(testsRoot, 'types.test.js'));
 mocha.addFile(path.join(testsRoot, 'terminalManager.test.js'));

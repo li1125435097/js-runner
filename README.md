@@ -50,10 +50,15 @@ Example: with `path: "python"`, running `Hello.py` sends `python "C:\path\to\Hel
 
 | languageId | label | path |
 |------------|-------|------|
+| `shellscript` | Bash | `bash` |
+| `java` | Java | `java` |
 | `javascript` | JavaScript | `node` |
 | `javascriptreact` | JavaScript React | `node` |
-| `typescript` | TypeScript | `node` |
 | `python` | Python | `python` |
+| `typescript` | TypeScript | `node --experimental-strip-types` |
+| `html` | HTML | `default browser` |
+
+HTML files open in the **system default browser** via `vscode.env.openExternal` (same as Ctrl+click on a link in the terminal). No terminal command is executed; the `path` value is display-only.
 
 ### Configure via sidebar
 
@@ -101,19 +106,20 @@ Use the exact string below — file extensions are shown for reference only; mat
 
 | languageId | Common extensions | Suggested `path` |
 |------------|-------------------|------------------|
+| `shellscript` | `.sh`, `.bash` | `bash` |
+| `java` | `.java` | `java` |
 | `javascript` | `.js`, `.mjs`, `.cjs` | `node` |
 | `javascriptreact` | `.jsx` | `node` |
-| `typescript` | `.ts` | `node`, `tsx`, or `ts-node` |
+| `typescript` | `.ts` | `node --experimental-strip-types` |
 | `python` | `.py`, `.pyw` | `python` or `python3` |
+| `html` | `.html`, `.htm` | `default browser` |
 
 #### Common additional identifiers
 
 | languageId | Common extensions | Suggested `path` | Notes |
 |------------|-------------------|------------------|-------|
 | `typescriptreact` | `.tsx` | `tsx` or `node` | TSX/JSX React files |
-| `shellscript` | `.sh`, `.bash` | `bash` or `sh` | Bash/shell scripts (`.sh` uses `shellscript`, not `bash`) |
 | `powershell` | `.ps1` | `powershell` | Windows PowerShell |
-| `java` | `.java` | — | Running `.java` directly usually requires compile step; `java` alone may not work for source files |
 | `go` | `.go` | `go run` | Command becomes `go run "file.go"` |
 | `ruby` | `.rb` | `ruby` | |
 | `php` | `.php` | `php` | |
@@ -125,9 +131,6 @@ Use the exact string below — file extensions are shown for reference only; mat
 | `kotlin` | `.kt`, `.kts` | `kotlin` | |
 | `swift` | `.swift` | `swift` | |
 | `dart` | `.dart` | `dart` | |
-| `html` | `.html`, `.htm` | — | Markup; usually not executed as a script |
-| `json` | `.json` | — | Data; usually not executed |
-| `markdown` | `.md` | — | Documentation; usually not executed |
 
 #### Extension-provided language IDs
 

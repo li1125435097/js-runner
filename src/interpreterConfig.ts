@@ -2,10 +2,13 @@ import * as vscode from 'vscode';
 import { LanguageInterpreter } from './types';
 
 export const DEFAULT_INTERPRETERS: LanguageInterpreter[] = [
+  { languageId: 'shellscript', label: 'Bash', path: 'bash' },
+  { languageId: 'java', label: 'Java', path: 'java' },
   { languageId: 'javascript', label: 'JavaScript', path: 'node' },
   { languageId: 'javascriptreact', label: 'JavaScript React', path: 'node' },
-  { languageId: 'typescript', label: 'TypeScript', path: 'node' },
   { languageId: 'python', label: 'Python', path: 'python' },
+  { languageId: 'typescript', label: 'TypeScript', path: 'node --experimental-strip-types' },
+  { languageId: 'html', label: 'HTML', path: 'default browser' },
 ];
 
 export function getInterpreters(): LanguageInterpreter[] {

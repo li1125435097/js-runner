@@ -25,6 +25,21 @@ describe('TerminalManager', () => {
     sinon.restore();
   });
 
+  it('opens html files in the system default browser without creating a terminal', async () => {
+    const vscodeMock = createVscodeMock();
+    const TerminalManager = loadTerminalManager(vscodeMock);
+    const manager = new TerminalManager();
+    const filePath = path.join('C:', 'workspace', 'Hello.html');
+
+    manager.runFile(filePath, 'html', 'new');
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(vscodeMock.window.__createdTerminals as unknown[]).to.be.empty;
+    expect(vscodeMock.env.openExternal.calledOnce).to.be.true;
+    expect(vscodeMock.env.openExternal.firstCall.args[0].toString()).to.match(/^file:\/\//);
+  });
+
   it('runs a configured file in a new terminal', () => {
     const vscodeMock = createVscodeMock();
     const TerminalManager = loadTerminalManager(vscodeMock);

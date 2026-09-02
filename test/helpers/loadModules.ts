@@ -16,6 +16,9 @@ export function loadTerminalManagerModule(
   return proxyquire.noCallThru()('../../terminalManager', {
     vscode: vscodeMock,
     './interpreterConfig': interpreterConfig,
+    './htmlFileOpener': proxyquire.noCallThru()('../../htmlFileOpener', {
+      vscode: vscodeMock,
+    }),
   }).TerminalManager;
 }
 

@@ -3,6 +3,7 @@
  */
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { openHtmlFile } from './htmlFileOpener';
 import { getInterpreterForLanguage } from './interpreterConfig';
 import { RunMode, RunningScript } from './types';
 
@@ -55,6 +56,14 @@ export class TerminalManager implements vscode.Disposable {
       void vscode.window.showWarningMessage(
         `No interpreter configured for language "${languageId}".`,
       );
+      return;
+    }
+
+    if (languageId === 'html') {
+      void openHtmlFile(filePath).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showErrorMessage(message);
+      });
       return;
     }
 
