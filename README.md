@@ -60,6 +60,8 @@ Example: with `path: "python"`, running `Hello.py` sends `python "C:\path\to\Hel
 
 HTML files open in the **system default browser** via `vscode.env.openExternal` (same as Ctrl+click on a link in the terminal). No terminal command is executed; the `path` value is display-only.
 
+At runtime, the extension scans the local terminal `PATH` for each default language. Interpreters that are found locally are appended automatically; languages without a matching executable are skipped. Existing entries in `jsRunner.interpreters` are kept unchanged.
+
 ### Configure via sidebar
 
 1. Open **JS Runner** → **Language Interpreters**

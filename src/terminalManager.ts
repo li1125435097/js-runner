@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { openHtmlFile } from './htmlFileOpener';
 import { getInterpreterForLanguage } from './interpreterConfig';
+import { buildRunCommand } from './terminalCommand';
 import { RunMode, RunningScript } from './types';
 
 let nextTerminalId = 1;
@@ -80,7 +81,8 @@ export class TerminalManager implements vscode.Disposable {
     });
 
     terminal.show();
-    terminal.sendText(`${interpreter.path} "${filePath}"`);
+    const scriptArg = languageId === 'shellscript' ? `./${fileName}` : filePath;
+    terminal.sendText(buildRunCommand(interpreter.path, scriptArg));
 
     this.trackRunningScript({
       terminal,

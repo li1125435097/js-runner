@@ -186,6 +186,13 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
           const fullKey = section ? `${section}.${key}` : key;
           configurationStore.set(fullKey, value);
         }),
+        inspect: <T>(key: string) => {
+          const fullKey = section ? `${section}.${key}` : key;
+          if (!configurationStore.has(fullKey)) {
+            return undefined;
+          }
+          return { globalValue: configurationStore.get(fullKey) as T };
+        },
       })),
       __emitConfigurationChange: (section: string) => {
         configChangeEmitter.fire({

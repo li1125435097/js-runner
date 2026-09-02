@@ -4,6 +4,13 @@ import * as sinon from 'sinon';
 import { DEFAULT_INTERPRETERS } from '../helpers/constants';
 import { loadTerminalManagerModule } from '../helpers/loadModules';
 import { createMockTerminal, createVscodeMock } from '../helpers/vscodeMock';
+import * as proxyquire from 'proxyquire';
+
+function loadTerminalCommandModule() {
+  return proxyquire.noCallThru()('../../terminalCommand', {}) as {
+    buildRunCommand: (interpreterPath: string, filePath: string) => string;
+  };
+}
 
 function loadTerminalManager(vscodeMock: ReturnType<typeof createVscodeMock>) {
   const interpreterConfig = {
@@ -40,6 +47,57 @@ describe('TerminalManager', () => {
     expect(vscodeMock.env.openExternal.firstCall.args[0].toString()).to.match(/^file:\/\//);
   });
 
+  it('quotes resolved Windows interpreter paths when running a file', () => {
+    const vscodeMock = createVscodeMock();
+    const interpreterConfig = {
+      getInterpreterForLanguage: () => ({
+        languageId: 'java',
+        label: 'Java',
+        path: 'C:\\Program Files\\Common Files\\Oracle\\Java\\javapath\\java.exe',
+      }),
+    };
+    const TerminalManager = loadTerminalManagerModule(vscodeMock, interpreterConfig) as new () => {
+      runFile(filePath: string, languageId: string, mode: 'replace' | 'new'): void;
+    };
+    const manager = new TerminalManager();
+    const filePath = 'c:\\Users\\bit2020\\Hello.java';
+
+    manager.runFile(filePath, 'java', 'new');
+
+    const terminals = vscodeMock.window.__createdTerminals as ReturnType<typeof createMockTerminal>[];
+    const { buildRunCommand } = loadTerminalCommandModule();
+    expect(terminals[0].sendText.firstCall.args[0]).to.equal(
+      buildRunCommand(
+        'C:\\Program Files\\Common Files\\Oracle\\Java\\javapath\\java.exe',
+        filePath,
+      ),
+    );
+  });
+
+  it('runs shell scripts with a relative path in the script directory', () => {
+    const vscodeMock = createVscodeMock();
+    const interpreterConfig = {
+      getInterpreterForLanguage: () => ({
+        languageId: 'shellscript',
+        label: 'Bash',
+        path: 'C:\\Program Files\\Git\\bin\\bash.exe',
+      }),
+    };
+    const TerminalManager = loadTerminalManagerModule(vscodeMock, interpreterConfig) as new () => {
+      runFile(filePath: string, languageId: string, mode: 'replace' | 'new'): void;
+    };
+    const manager = new TerminalManager();
+    const filePath = 'c:\\Users\\bit2020\\codePlace\\js-runner\\test\\language-test\\Hello.sh';
+
+    manager.runFile(filePath, 'shellscript', 'new');
+
+    const terminals = vscodeMock.window.__createdTerminals as ReturnType<typeof createMockTerminal>[];
+    const { buildRunCommand } = loadTerminalCommandModule();
+    expect(terminals[0].sendText.firstCall.args[0]).to.equal(
+      buildRunCommand('C:\\Program Files\\Git\\bin\\bash.exe', './Hello.sh'),
+    );
+  });
+
   it('runs a configured file in a new terminal', () => {
     const vscodeMock = createVscodeMock();
     const TerminalManager = loadTerminalManager(vscodeMock);
@@ -51,7 +109,8 @@ describe('TerminalManager', () => {
     const terminals = vscodeMock.window.__createdTerminals as ReturnType<typeof createMockTerminal>[];
     expect(terminals).to.have.length(1);
     expect(terminals[0].show.calledOnce).to.be.true;
-    expect(terminals[0].sendText.firstCall.args[0]).to.equal(`node "${filePath}"`);
+    const { buildRunCommand } = loadTerminalCommandModule();
+    expect(terminals[0].sendText.firstCall.args[0]).to.equal(buildRunCommand('node', filePath));
     expect(manager.getRunningScripts()).to.have.length(1);
     expect(manager.getRunningScripts()[0].type).to.equal('js');
   });
