@@ -1,5 +1,9 @@
 # JS Runner Kit
 
+**English** | [中文](#中文)
+
+Repository: [https://github.com/li1125435097/js-runner](https://github.com/li1125435097/js-runner)
+
 A VS Code / Cursor extension for running source files and npm scripts in parallel terminals, with sidebar views for npm scripts, active runs, and configurable language interpreters.
 
 ## Features
@@ -211,5 +215,227 @@ Press **F4** in this repo to launch the Extension Development Host.
 Sample files for manual language testing: `test/language-test/` (`Hello.py`, `Hello.sh`, `Hello.ts`, `Hello.java`, `Hello.html`).
 
 ## License
+
+MIT
+
+---
+
+## 中文
+
+[English](#js-runner-kit) | **中文**
+
+仓库地址：[https://github.com/li1125435097/js-runner](https://github.com/li1125435097/js-runner)
+
+一款 VS Code / Cursor 扩展，可在并行终端中运行源文件和 npm 脚本，并提供 npm 脚本、运行中任务和语言解释器的侧边栏视图。
+
+## 功能
+
+- **运行当前文件** — 当文件语言已配置解释器时，编辑器标题栏显示运行按钮，快捷键 F4
+- **并行终端** — 每次运行独立终端；Ctrl+F4 在新终端运行同一文件，不影响其他终端
+- **NPM Scripts 侧边栏** — 扫描工作区所有 `package.json`（排除 `node_modules`），按包分组，`package.json` 变更时自动刷新
+- **调试 NPM 脚本** — 对 Node/JS 相关脚本（vite、tsx、node 等）显示行内调试按钮；尽可能以 VS Code JavaScript Debugger 启动并保留断点
+- **Running Scripts 侧边栏** — 列出活跃终端；点击聚焦或停止单个运行
+- **Language Interpreters 侧边栏** — 列出语言与解释器路径；可添加、编辑或删除
+
+## 安装
+
+从打包的 `.vsix` 安装：
+
+```bash
+npm run package
+npm run install:plugin
+```
+
+或在 VS Code / Cursor 中手动安装：**扩展** → **⋯** → **从 VSIX 安装…** → 选择 `js-runner-kit-0.0.4.vsix`（`release/` 目录下也有）。
+
+## 侧边栏视图
+
+点击活动栏 **JS Runner** 图标：
+
+| 视图 | 说明 |
+|------|------|
+| **NPM Scripts** | 按 `package.json` 分组的工作区 npm 脚本；播放运行，JS 相关脚本显示调试图标 |
+| **Running Scripts** | 扩展追踪的终端；点击行可聚焦对应终端 |
+| **Language Interpreters** | 运行文件时使用的语言 → 解释器映射 |
+
+## 命令
+
+| 命令 | 快捷键 | 说明 |
+|------|--------|------|
+| Run JS File | F4 | 运行当前文件（替换同文件已有终端） |
+| Run JS File in New Terminal | Ctrl+F4 | 在新终端运行当前文件 |
+| Stop All Running Scripts | — | 关闭所有追踪的终端 |
+| Stop Running Script | — | 从 Running Scripts 关闭单个终端 |
+| Focus Running Terminal | — | 聚焦 Running Scripts 中的终端（点击行也会触发） |
+| Refresh NPM Scripts | — | 重新扫描工作区 `package.json` 脚本 |
+| Run NPM Script | — | 从 NPM Scripts 侧边栏运行脚本 |
+| Debug NPM Script | — | 从 NPM Scripts 侧边栏调试 JS 相关脚本 |
+| Add Language Interpreter | — | 在侧边栏添加语言与解释器（+ 按钮） |
+| Edit Language Interpreter | — | 编辑已有条目的 label 或 path |
+| Remove Language Interpreter | — | 删除解释器条目 |
+
+仅当当前编辑器语言有匹配解释器时，快捷键才生效（`jsRunner.canRunCurrentFile`）。
+
+## NPM 脚本调试
+
+命令中包含 Node/JS 工具链（如 `node`、`vite`、`tsx`、`ts-node`、`nodemon`、`next`、`jest`，或以 `.js`/`.ts` 为入口文件）的脚本，会在 NPM Scripts 侧边栏显示 **debug** 行内按钮。
+
+调试时扩展会：
+
+1. 解析 npm 脚本命令（支持简单的 `cross-env` / `VAR=value` 前缀）
+2. 尽可能通过 `node_modules/.bin` 解析已知 CLI
+3. 启动 **Node** 调试会话，直接运行底层程序 — 编辑器断点可用
+4. 无法解析时回退到 **node-terminal** 会话（`npm run <script>`）
+
+需要内置 **JavaScript Debugger**（VS Code / Cursor 自带）。启动失败时会显示错误提示。
+
+## 语言解释器
+
+运行文件时，扩展在 `jsRunner.interpreters` 中查找编辑器的 **VS Code language ID**，并执行：
+
+```text
+{path} "{absoluteFilePath}"
+```
+
+Shell 脚本（`shellscript`）使用相对路径：`{path} "./{fileName}"`（在文件所在目录）。
+
+示例：`path: "python"` 时，运行 `Hello.py` 会发送 `python "C:\path\to\Hello.py"` 到终端。
+
+### 默认解释器
+
+| languageId | label | path |
+|------------|-------|------|
+| `shellscript` | Bash | `bash` |
+| `java` | Java | `java` |
+| `javascript` | JavaScript | `node` |
+| `javascriptreact` | JavaScript React | `node` |
+| `python` | Python | `python` |
+| `typescript` | TypeScript | `node --experimental-strip-types` |
+| `html` | HTML | `default browser` |
+
+HTML 文件通过 `vscode.env.openExternal` 在**系统默认浏览器**中打开（与终端中 Ctrl+点击链接相同）。不执行终端命令；`path` 值仅用于显示。
+
+运行时，扩展会扫描本地终端 `PATH` 中的默认可执行文件。找到的解释器会自动追加；未找到的可执行文件对应语言会被跳过。`jsRunner.interpreters` 中已有条目保持不变。Windows 上存在多个 `bash` 时，优先使用 **Git Bash**，而非 WSL 的 `System32\bash.exe`。
+
+### 通过侧边栏配置
+
+1. 打开 **JS Runner** → **Language Interpreters**
+2. 点击 **+** 添加，或在每行使用行内编辑/删除
+3. 字段：
+   - **languageId** — VS Code 语言标识符（必填）
+   - **label** — 侧边栏显示名称（可选）
+   - **path** — 解释器可执行文件或 `PATH` 中的命令（必填）
+
+### 通过设置配置
+
+在用户/工作区 `settings.json` 中添加或合并条目：
+
+```json
+{
+  "jsRunner.interpreters": [
+    {
+      "languageId": "shellscript",
+      "label": "Bash",
+      "path": "bash"
+    },
+    {
+      "languageId": "java",
+      "label": "Java",
+      "path": "java"
+    }
+  ]
+}
+```
+
+Windows 上若 `bash` 不在 `PATH` 中，可使用完整路径：
+
+```json
+"path": "C:\\Program Files\\Git\\bin\\bash.exe"
+```
+
+### `languageId` 参考
+
+`languageId` **不是本扩展内的固定枚举**。必须与当前文件的 [VS Code 语言标识符](https://code.visualstudio.com/docs/languages/identifiers) 完全一致（右下角语言模式，或通过 **Developer: Inspect Editor Tokens and Scopes** 查看）。
+
+下表扩展名仅供参考；匹配依据是 language ID，而非文件后缀。
+
+#### 内置默认（预配置）
+
+| languageId | 常见扩展名 | 建议 `path` |
+|------------|-----------|-------------|
+| `shellscript` | `.sh`, `.bash` | `bash` |
+| `java` | `.java` | `java` |
+| `javascript` | `.js`, `.mjs`, `.cjs` | `node` |
+| `javascriptreact` | `.jsx` | `node` |
+| `typescript` | `.ts` | `node --experimental-strip-types` |
+| `python` | `.py`, `.pyw` | `python` 或 `python3` |
+| `html` | `.html`, `.htm` | `default browser` |
+
+#### 常见额外标识符
+
+| languageId | 常见扩展名 | 建议 `path` | 备注 |
+|------------|-----------|-------------|------|
+| `typescriptreact` | `.tsx` | `tsx` 或 `node` | TSX/JSX React 文件 |
+| `powershell` | `.ps1` | `powershell` | Windows PowerShell |
+| `go` | `.go` | `go run` | 命令为 `go run "file.go"` |
+| `ruby` | `.rb` | `ruby` | |
+| `php` | `.php` | `php` | |
+| `csharp` | `.cs` | `dotnet run` | 可能需要项目上下文 |
+| `rust` | `.rs` | `rustc` | 编译流程；单文件运行可能需要额外配置 |
+| `lua` | `.lua` | `lua` | |
+| `r` | `.r`, `.R` | `Rscript` | |
+| `perl` | `.pl`, `.pm` | `perl` | |
+| `kotlin` | `.kt`, `.kts` | `kotlin` | |
+| `swift` | `.swift` | `swift` | |
+| `dart` | `.dart` | `dart` | |
+
+#### 扩展提供的 language ID
+
+语言扩展可注册自己的 ID（如 `vue`、`svelte`）。对文件使用 **Developer: Inspect Editor Tokens and Scopes** 查看 `language:` 字段，再添加到 **Language Interpreters**。
+
+### 示例
+
+**Shell 脚本（`.sh`）**
+
+```json
+{
+  "languageId": "shellscript",
+  "label": "Bash",
+  "path": "bash"
+}
+```
+
+**使用 tsx 运行 TypeScript**
+
+```json
+{
+  "languageId": "typescript",
+  "label": "TypeScript",
+  "path": "tsx"
+}
+```
+
+## 快捷键说明
+
+当当前文件已配置解释器时，F4 和 Ctrl+F4 会覆盖 VS Code 默认调试快捷键。可在 **键盘快捷方式** 中重新映射。
+
+## 开发
+
+```bash
+npm install
+npm run compile
+npm run test          # 单元 + 集成测试
+npm run test:unit
+npm run test:integration
+npm run lint
+npm run package       # 构建 js-runner-kit-0.0.4.vsix
+npm run install:plugin
+```
+
+在本仓库中按 **F4** 可启动 Extension Development Host。
+
+手动语言测试样例：`test/language-test/`（`Hello.py`、`Hello.sh`、`Hello.ts`、`Hello.java`、`Hello.html`）。
+
+## 许可证
 
 MIT
