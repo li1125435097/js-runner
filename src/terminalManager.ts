@@ -1,3 +1,6 @@
+/**
+ * 终端生命周期管理：创建/停止终端、追踪运行中的脚本，并通知 UI 刷新。
+ */
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { RunMode, RunningScript } from './types';
@@ -5,13 +8,16 @@ import { RunMode, RunningScript } from './types';
 let nextTerminalId = 1;
 
 export class TerminalManager implements vscode.Disposable {
+  /** 所有运行中脚本，key 为自增终端 ID */
   private readonly runningScripts = new Map<string, RunningScript>();
+  /** 同一 JS 文件可能对应多个终端（new 模式），用于 replace 模式批量停止 */
   private readonly filePathToTerminalIds = new Map<string, Set<string>>();
   private readonly _onDidChangeRunningScripts = new vscode.EventEmitter<void>();
   readonly onDidChangeRunningScripts = this._onDidChangeRunningScripts.event;
   private readonly closeTerminalListener: vscode.Disposable;
 
   constructor() {
+    // 用户手动关闭终端时，同步清理内部追踪状态
     this.closeTerminalListener = vscode.window.onDidCloseTerminal((closedTerminal) => {
       for (const [id, script] of this.runningScripts) {
         if (script.terminal === closedTerminal) {
@@ -22,6 +28,7 @@ export class TerminalManager implements vscode.Disposable {
     });
   }
 
+  /** 运行当前编辑器中的 JS/JSX 文件 */
   runCurrentFile(mode: RunMode): void {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -37,6 +44,7 @@ export class TerminalManager implements vscode.Disposable {
     this.runJsFile(document.fileName, mode);
   }
 
+  /** 在终端中执行 node 命令运行指定 JS 文件 */
   runJsFile(filePath: string, mode: RunMode): void {
     if (mode === 'replace') {
       this.stopTerminalsForFile(filePath);
@@ -60,6 +68,7 @@ export class TerminalManager implements vscode.Disposable {
     });
   }
 
+  /** 在 package.json 所在目录执行 npm run */
   runNpmScript(name: string, packageJsonPath: string): void {
     const dir = path.dirname(packageJsonPath);
     const terminal = vscode.window.createTerminal({
@@ -106,6 +115,7 @@ export class TerminalManager implements vscode.Disposable {
     this._onDidChangeRunningScripts.dispose();
   }
 
+  /** 登记新终端并触发运行列表更新 */
   private trackRunningScript(
     params: Omit<RunningScript, 'id'>,
   ): void {
@@ -122,6 +132,7 @@ export class TerminalManager implements vscode.Disposable {
     this._onDidChangeRunningScripts.fire();
   }
 
+  /** replace 模式：停止同一文件的所有已有终端 */
   private stopTerminalsForFile(filePath: string): void {
     const ids = this.filePathToTerminalIds.get(filePath);
     if (!ids) {

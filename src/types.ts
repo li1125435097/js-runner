@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 
+/** 运行 JS 文件时的终端模式：replace 替换同文件已有终端，new 始终新建 */
 export type RunMode = 'replace' | 'new';
 
+/** 脚本类型：直接运行 JS 文件，或通过 npm script 运行 */
 export type ScriptType = 'js' | 'npm';
 
+/** 正在运行的脚本实例，与 VS Code 终端一一对应 */
 export interface RunningScript {
   id: string;
   terminal: vscode.Terminal;
@@ -13,18 +16,21 @@ export interface RunningScript {
   packageJsonPath?: string;
 }
 
+/** 从 package.json 解析出的单个 npm script */
 export interface NpmScriptInfo {
   name: string;
   command: string;
   packageJsonPath: string;
 }
 
+/** 按 package.json 分组的 npm scripts，用于树视图顶层节点 */
 export interface PackageGroup {
   packageJsonPath: string;
   label: string;
   scripts: NpmScriptInfo[];
 }
 
+/** npm scripts 树视图中的包分组节点 */
 export class PackageGroupItem extends vscode.TreeItem {
   constructor(public readonly group: PackageGroup) {
     super(group.label, vscode.TreeItemCollapsibleState.Expanded);
@@ -34,6 +40,7 @@ export class PackageGroupItem extends vscode.TreeItem {
   }
 }
 
+/** npm scripts 树视图中的单个 script 节点，点击即可运行 */
 export class ScriptTreeItem extends vscode.TreeItem {
   constructor(public readonly script: NpmScriptInfo) {
     super(script.name, vscode.TreeItemCollapsibleState.None);
@@ -49,6 +56,7 @@ export class ScriptTreeItem extends vscode.TreeItem {
   }
 }
 
+/** 运行中脚本树视图节点，点击可聚焦对应终端 */
 export class RunningScriptTreeItem extends vscode.TreeItem {
   constructor(public readonly runningScript: RunningScript) {
     super(runningScript.name, vscode.TreeItemCollapsibleState.None);

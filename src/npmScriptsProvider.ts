@@ -1,3 +1,6 @@
+/**
+ * npm scripts 树视图数据源：扫描工作区 package.json，按包分组展示 scripts。
+ */
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -19,6 +22,7 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
   constructor() {
     void this.scanScripts();
 
+    // package.json 变更时自动重新扫描
     this.watcher = vscode.workspace.createFileSystemWatcher('**/package.json');
     this.watcher.onDidChange(() => void this.scanScripts());
     this.watcher.onDidCreate(() => void this.scanScripts());
@@ -39,10 +43,12 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   getChildren(element?: TreeElement): TreeElement[] {
     if (!element) {
+      // 根节点：各 package.json 分组
       return this.groups.map((group) => new PackageGroupItem(group));
     }
 
     if (element.contextValue === 'packageGroup') {
+      // 子节点：该包下的 npm scripts
       return (element as PackageGroupItem).group.scripts.map((script) => new ScriptTreeItem(script));
     }
 
@@ -55,6 +61,7 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     this._onDidChangeTreeData.dispose();
   }
 
+  /** 扫描工作区所有 package.json，解析 scripts 字段并分组 */
   private async scanScripts(): Promise<void> {
     if (!vscode.workspace.workspaceFolders?.length) {
       this.groups = [];
@@ -88,7 +95,7 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
           scripts,
         });
       } catch {
-        // Ignore invalid package.json files.
+        // 忽略格式错误的 package.json
       }
     }
 
@@ -98,6 +105,7 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     this._onDidChangeTreeData.fire(undefined);
   }
 
+  /** 生成树节点显示标签，如 "my-app" 或 "my-app/packages/core" */
   private getRelativePackageLabel(packageJsonPath: string): string {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(packageJsonPath));
     if (workspaceFolder) {

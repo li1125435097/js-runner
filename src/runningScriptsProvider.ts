@@ -1,3 +1,6 @@
+/**
+ * 运行中脚本树视图数据源：订阅 TerminalManager 变更，展示当前活跃终端列表。
+ */
 import * as vscode from 'vscode';
 import { RunningScriptTreeItem } from './types';
 import { TerminalManager } from './terminalManager';
@@ -8,6 +11,7 @@ export class RunningScriptsProvider implements vscode.TreeDataProvider<RunningSc
   private readonly changeListener: vscode.Disposable;
 
   constructor(private readonly terminalManager: TerminalManager) {
+    // 终端增删时刷新树视图
     this.changeListener = this.terminalManager.onDidChangeRunningScripts(() => {
       this._onDidChangeTreeData.fire(undefined);
     });
