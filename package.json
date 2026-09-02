@@ -59,6 +59,11 @@
         "icon": "$(play)"
       },
       {
+        "command": "jsRunner.debugNpmScript",
+        "title": "Debug NPM Script",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "jsRunner.focusRunningTerminal",
         "title": "Focus Running Terminal",
         "icon": "$(terminal)"
@@ -144,8 +149,13 @@
       "view/item/context": [
         {
           "command": "jsRunner.runNpmScript",
-          "when": "view == npmScriptsView && viewItem == npmScript",
-          "group": "inline"
+          "when": "view == npmScriptsView && (viewItem == npmScript || viewItem == npmScriptJs)",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.debugNpmScript",
+          "when": "view == npmScriptsView && viewItem == npmScriptJs",
+          "group": "inline@2"
         },
         {
           "command": "jsRunner.stopTerminal",
@@ -167,12 +177,12 @@
     "keybindings": [
       {
         "command": "jsRunner.runCurrentFile",
-        "key": "f5",
+        "key": "f4",
         "when": "editorTextFocus && jsRunner.canRunCurrentFile"
       },
       {
         "command": "jsRunner.runCurrentFileNewTerminal",
-        "key": "ctrl+f5",
+        "key": "ctrl+f4",
         "when": "editorTextFocus && jsRunner.canRunCurrentFile"
       }
     ],

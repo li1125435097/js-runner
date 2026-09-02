@@ -114,6 +114,9 @@ export interface VscodeMock {
     executeCommand: sinon.SinonStub;
     registerCommand: sinon.SinonStub;
   };
+  debug: {
+    startDebugging: sinon.SinonStub;
+  };
   __configurationStore: Map<string, unknown>;
 }
 
@@ -232,6 +235,9 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     commands: {
       executeCommand: sinon.stub().resolves(undefined),
       registerCommand: sinon.stub().returns({ dispose: sinon.stub() }),
+    },
+    debug: {
+      startDebugging: sinon.stub().resolves(true),
     },
     __configurationStore: configurationStore,
   };

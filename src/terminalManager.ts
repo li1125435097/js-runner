@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { openHtmlFile } from './htmlFileOpener';
 import { getInterpreterForLanguage } from './interpreterConfig';
 import { buildRunCommand } from './terminalCommand';
+import { buildNpmScriptDebugConfig } from './npmScriptDebug';
 import { RunMode, RunningScript } from './types';
 
 let nextTerminalId = 1;
@@ -109,6 +110,20 @@ export class TerminalManager implements vscode.Disposable {
       type: 'npm',
       packageJsonPath,
     });
+  }
+
+  /** 以 VS Code Node 调试器启动 npm script */
+  async debugNpmScript(name: string, packageJsonPath: string, command: string): Promise<void> {
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(packageJsonPath));
+    const config = buildNpmScriptDebugConfig({ name, command, packageJsonPath });
+    await vscode.commands.executeCommand('workbench.view.debug');
+    const started = await vscode.debug.startDebugging(workspaceFolder, config);
+
+    if (!started) {
+      void vscode.window.showErrorMessage(
+        `Failed to start debugger for npm script "${name}". Ensure the JavaScript Debugger extension is available.`,
+      );
+    }
   }
 
   stopAll(): void {

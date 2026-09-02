@@ -1,4 +1,5 @@
 declare module '../../terminalManager';
+declare module '../../npmScriptDebug';
 declare module '../../types';
 declare module '../../npmScriptsProvider';
 declare module '../../interpreterConfig';

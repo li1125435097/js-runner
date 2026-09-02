@@ -30,6 +30,20 @@ export interface NpmScriptInfo {
   packageJsonPath: string;
 }
 
+/** 判断 npm script 是否可能由 Node/JS 工具链执行，用于显示 debug 按钮 */
+export function isJsNpmScript(command: string): boolean {
+  const normalized = command.trim().toLowerCase();
+  if (
+    /\b(node|nodemon|tsx|ts-node|vite|next|nuxt|jest|mocha|webpack|rollup|esbuild|tsc|babel)\b/.test(
+      normalized,
+    )
+  ) {
+    return true;
+  }
+
+  return /\.(js|mjs|cjs|ts|tsx|jsx)(\s|$|'|")/.test(normalized);
+}
+
 /** 按 package.json 分组的 npm scripts，用于树视图顶层节点 */
 export interface PackageGroup {
   packageJsonPath: string;
@@ -54,7 +68,7 @@ export class ScriptTreeItem extends vscode.TreeItem {
     this.description = script.command;
     this.tooltip = `npm run ${script.name}\n${script.command}`;
     this.iconPath = new vscode.ThemeIcon('play');
-    this.contextValue = 'npmScript';
+    this.contextValue = isJsNpmScript(script.command) ? 'npmScriptJs' : 'npmScript';
     this.command = {
       command: 'jsRunner.runNpmScript',
       title: 'Run Script',

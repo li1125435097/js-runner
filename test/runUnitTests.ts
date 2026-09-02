@@ -14,6 +14,7 @@ mocha.addFile(path.join(testsRoot, 'htmlFileOpener.test.js'));
 mocha.addFile(path.join(testsRoot, 'interpreterConfig.test.js'));
 mocha.addFile(path.join(testsRoot, 'types.test.js'));
 mocha.addFile(path.join(testsRoot, 'terminalManager.test.js'));
+mocha.addFile(path.join(testsRoot, 'npmScriptDebug.test.js'));
 mocha.addFile(path.join(testsRoot, 'npmScriptsProvider.test.js'));
 mocha.addFile(path.join(testsRoot, 'runningScriptsProvider.test.js'));
 mocha.addFile(path.join(testsRoot, 'languageInterpretersProvider.test.js'));

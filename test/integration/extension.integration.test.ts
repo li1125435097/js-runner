@@ -24,6 +24,7 @@ suite('JS Runner extension integration', () => {
       'jsRunner.stopTerminal',
       'jsRunner.refreshScripts',
       'jsRunner.runNpmScript',
+      'jsRunner.debugNpmScript',
       'jsRunner.focusRunningTerminal',
       'jsRunner.addInterpreter',
       'jsRunner.editInterpreter',

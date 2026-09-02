@@ -4,8 +4,8 @@ A VS Code / Cursor extension for running source files and npm scripts in paralle
 
 ## Features
 
-- **Run current file** — Editor title bar play button and F5 when the file's language has a configured interpreter
-- **Parallel terminals** — Each run opens its own terminal; Ctrl+F5 runs the same file in a new terminal without stopping others
+- **Run current file** — Editor title bar play button and F4 when the file's language has a configured interpreter
+- **Parallel terminals** — Each run opens its own terminal; Ctrl+F4 runs the same file in a new terminal without stopping others
 - **NPM Scripts sidebar** — Scans all `package.json` files (excluding `node_modules`) and groups scripts by package
 - **Running Scripts sidebar** — Lists active terminals; focus or stop individual runs
 - **Language Interpreters sidebar** — Lists supported languages and interpreter paths; add, edit, or remove entries
@@ -24,8 +24,8 @@ Open the **JS Runner** activity bar icon to access:
 
 | Command | Shortcut | Description |
 |---------|----------|-------------|
-| Run JS File | F5 | Run current file (replaces existing terminal for the same file) |
-| Run JS File in New Terminal | Ctrl+F5 | Run current file in a new terminal |
+| Run JS File | F4 | Run current file (replaces existing terminal for the same file) |
+| Run JS File in New Terminal | Ctrl+F4 | Run current file in a new terminal |
 | Stop All Running Scripts | — | Close all tracked terminals |
 | Stop Running Script | — | Close one terminal from Running Scripts |
 | Refresh NPM Scripts | — | Rescan workspace for `package.json` scripts |
@@ -162,7 +162,7 @@ Language extensions can register their own IDs (for example `vue`, `svelte`). Us
 
 ## Keybinding note
 
-F5 and Ctrl+F5 override VS Code's default debug shortcuts when the current file has a configured interpreter. Remap them in **Keyboard Shortcuts** if needed.
+F4 and Ctrl+F4 override VS Code's default debug shortcuts when the current file has a configured interpreter. Remap them in **Keyboard Shortcuts** if needed.
 
 ## Development
 
@@ -174,7 +174,7 @@ npm run test:unit
 npm run test:integration
 ```
 
-Press **F5** in this repo to launch the Extension Development Host.
+Press **F4** in this repo to launch the Extension Development Host.
 
 Sample files for manual language testing: `test/language-test/` (`Hello.py`, `Hello.sh`, `Hello.ts`, `Hello.java`).
 

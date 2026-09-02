@@ -57,11 +57,24 @@ describe('types tree items', () => {
 
     expect(item.label).to.equal('build');
     expect(item.description).to.equal('tsc');
-    expect(item.contextValue).to.equal('npmScript');
+    expect(item.contextValue).to.equal('npmScriptJs');
     expect(item.command).to.deep.include({
       command: 'jsRunner.runNpmScript',
       arguments: [script],
     });
+  });
+
+  it('marks non-js npm scripts without debug context', () => {
+    const vscodeMock = createVscodeMock();
+    const { ScriptTreeItem } = loadTypes(vscodeMock);
+    const script = {
+      name: 'lint',
+      command: 'echo lint',
+      packageJsonPath: '/workspace/package.json',
+    };
+    const item = new ScriptTreeItem(script);
+
+    expect(item.contextValue).to.equal('npmScript');
   });
 
   it('creates language interpreter tree item', () => {
