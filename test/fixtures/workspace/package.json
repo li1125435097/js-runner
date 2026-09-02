@@ -1,0 +1,10 @@
+{
+  "name": "js-runner-test-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo build-ok",
+    "start": "node hello.js",
+    "test": "echo test-ok"
+  }
+}

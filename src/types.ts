@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
 
+/** 语言与解释器映射配置 */
+export interface LanguageInterpreter {
+  languageId: string;
+  label?: string;
+  path: string;
+}
+
 /** 运行 JS 文件时的终端模式：replace 替换同文件已有终端，new 始终新建 */
 export type RunMode = 'replace' | 'new';
 
@@ -53,6 +60,17 @@ export class ScriptTreeItem extends vscode.TreeItem {
       title: 'Run Script',
       arguments: [script],
     };
+  }
+}
+
+/** 语言解释器树视图节点 */
+export class LanguageInterpreterTreeItem extends vscode.TreeItem {
+  constructor(public readonly interpreter: LanguageInterpreter) {
+    super(interpreter.label ?? interpreter.languageId, vscode.TreeItemCollapsibleState.None);
+    this.description = interpreter.path;
+    this.tooltip = `${interpreter.languageId}\n${interpreter.path}`;
+    this.iconPath = new vscode.ThemeIcon('symbol-method');
+    this.contextValue = 'languageInterpreter';
   }
 }
 

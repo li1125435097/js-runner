@@ -3,6 +3,7 @@
  */
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { getInterpreterForLanguage } from './interpreterConfig';
 import { RunMode, RunningScript } from './types';
 
 let nextTerminalId = 1;
@@ -28,7 +29,7 @@ export class TerminalManager implements vscode.Disposable {
     });
   }
 
-  /** 运行当前编辑器中的 JS/JSX 文件 */
+  /** 运行当前编辑器中的已配置语言文件 */
   runCurrentFile(mode: RunMode): void {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -36,29 +37,41 @@ export class TerminalManager implements vscode.Disposable {
     }
 
     const { document } = editor;
-    if (document.languageId !== 'javascript' && document.languageId !== 'javascriptreact') {
-      void vscode.window.showWarningMessage('JS Runner only supports JavaScript files.');
+    const interpreter = getInterpreterForLanguage(document.languageId);
+    if (!interpreter) {
+      void vscode.window.showWarningMessage(
+        `No interpreter configured for language "${document.languageId}". Add one in the Language Interpreters sidebar.`,
+      );
       return;
     }
 
-    this.runJsFile(document.fileName, mode);
+    this.runFile(document.fileName, document.languageId, mode);
   }
 
-  /** 在终端中执行 node 命令运行指定 JS 文件 */
-  runJsFile(filePath: string, mode: RunMode): void {
+  /** 在终端中用配置的解释器运行指定文件 */
+  runFile(filePath: string, languageId: string, mode: RunMode): void {
+    const interpreter = getInterpreterForLanguage(languageId);
+    if (!interpreter) {
+      void vscode.window.showWarningMessage(
+        `No interpreter configured for language "${languageId}".`,
+      );
+      return;
+    }
+
     if (mode === 'replace') {
       this.stopTerminalsForFile(filePath);
     }
 
     const fileName = path.basename(filePath);
     const dir = path.dirname(filePath);
+    const displayLabel = interpreter.label ?? languageId;
     const terminal = vscode.window.createTerminal({
-      name: `JS: ${fileName}`,
+      name: `${displayLabel}: ${fileName}`,
       cwd: dir,
     });
 
     terminal.show();
-    terminal.sendText(`node "${filePath}"`);
+    terminal.sendText(`${interpreter.path} "${filePath}"`);
 
     this.trackRunningScript({
       terminal,

@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
@@ -22,9 +22,10 @@
     "onLanguage:javascriptreact",
     "onView:npmScriptsView",
     "onView:runningScriptsView",
+    "onView:languageInterpretersView",
     "workspaceContains:package.json"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -61,6 +62,21 @@
         "command": "jsRunner.focusRunningTerminal",
         "title": "Focus Running Terminal",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "jsRunner.addInterpreter",
+        "title": "Add Language Interpreter",
+        "icon": "$(add)"
+      },
+      {
+        "command": "jsRunner.editInterpreter",
+        "title": "Edit Language Interpreter",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "jsRunner.removeInterpreter",
+        "title": "Remove Language Interpreter",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -81,6 +97,10 @@
         {
           "id": "runningScriptsView",
           "name": "Running Scripts"
+        },
+        {
+          "id": "languageInterpretersView",
+          "name": "Language Interpreters"
         }
       ]
     },
@@ -88,24 +108,24 @@
       "editor/title": [
         {
           "command": "jsRunner.runCurrentFile",
-          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "when": "jsRunner.active && jsRunner.canRunCurrentFile",
           "group": "navigation@1"
         },
         {
           "command": "jsRunner.runCurrentFileNewTerminal",
-          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "when": "jsRunner.active && jsRunner.canRunCurrentFile",
           "group": "navigation@2"
         }
       ],
       "editor/title/run": [
         {
           "command": "jsRunner.runCurrentFile",
-          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "when": "jsRunner.active && jsRunner.canRunCurrentFile",
           "group": "run@1"
         },
         {
           "command": "jsRunner.runCurrentFileNewTerminal",
-          "when": "jsRunner.active && (editorLangId == javascript || editorLangId == javascriptreact)",
+          "when": "jsRunner.active && jsRunner.canRunCurrentFile",
           "group": "run@2"
         }
       ],
@@ -113,6 +133,11 @@
         {
           "command": "jsRunner.refreshScripts",
           "when": "view == npmScriptsView && jsRunner.active",
+          "group": "navigation"
+        },
+        {
+          "command": "jsRunner.addInterpreter",
+          "when": "view == languageInterpretersView && jsRunner.active",
           "group": "navigation"
         }
       ],
@@ -126,6 +151,16 @@
           "command": "jsRunner.stopTerminal",
           "when": "view == runningScriptsView && viewItem == runningScript",
           "group": "inline"
+        },
+        {
+          "command": "jsRunner.editInterpreter",
+          "when": "view == languageInterpretersView && viewItem == languageInterpreter",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.removeInterpreter",
+          "when": "view == languageInterpretersView && viewItem == languageInterpreter",
+          "group": "inline@2"
         }
       ]
     },
@@ -133,32 +168,97 @@
       {
         "command": "jsRunner.runCurrentFile",
         "key": "f5",
-        "when": "editorTextFocus && (resourceLangId == javascript || resourceLangId == javascriptreact)"
+        "when": "editorTextFocus && jsRunner.canRunCurrentFile"
       },
       {
         "command": "jsRunner.runCurrentFileNewTerminal",
         "key": "ctrl+f5",
-        "when": "editorTextFocus && (resourceLangId == javascript || resourceLangId == javascriptreact)"
+        "when": "editorTextFocus && jsRunner.canRunCurrentFile"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "JS Runner",
+      "properties": {
+        "jsRunner.interpreters": {
+          "type": "array",
+          "default": [
+            {
+              "languageId": "javascript",
+              "label": "JavaScript",
+              "path": "node"
+            },
+            {
+              "languageId": "javascriptreact",
+              "label": "JavaScript React",
+              "path": "node"
+            },
+            {
+              "languageId": "typescript",
+              "label": "TypeScript",
+              "path": "node"
+            },
+            {
+              "languageId": "python",
+              "label": "Python",
+              "path": "python"
+            }
+          ],
+          "description": "Language interpreters used when running files from the editor.",
+          "items": {
+            "type": "object",
+            "required": [
+              "languageId",
+              "path"
+            ],
+            "properties": {
+              "languageId": {
+                "type": "string",
+                "description": "VS Code language ID"
+              },
+              "label": {
+                "type": "string",
+                "description": "Display name in the sidebar"
+              },
+              "path": {
+                "type": "string",
+                "description": "Interpreter executable path or command"
+              }
+            }
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
+    "compile:test": "npm run compile && tsc -p test/tsconfig.json",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "package": "vsce package",
-    "install:plugin": "cursor --install-extension js-runner-kit-0.0.2.vsix",
+    "install:plugin": "cursor --install-extension js-runner-kit-0.0.4.vsix",
+    "test:unit": "npm run compile:test && node dist/test/runUnitTests.js",
+    "test:integration": "npm run compile:test && node dist/test/runIntegrationTests.js",
+    "test": "npm run test:unit && npm run test:integration",
     "publish": "vsce publish",
     "publish:patch": "vsce publish patch",
     "publish:minor": "vsce publish minor",
     "publish:major": "vsce publish major"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.11.0",
+    "@types/proxyquire": "^1.3.31",
+    "@types/sinon": "^17.0.4",
     "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.2.1",
+    "chai": "^4.5.0",
+    "mocha": "^10.8.2",
     "ovsx": "^1.1.1",
+    "proxyquire": "^2.1.3",
+    "sinon": "^19.0.2",
     "typescript": "^5.3.3"
   }
 }

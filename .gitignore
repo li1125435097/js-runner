@@ -74,14 +74,16 @@ web_modules/
 .cache
 .parcel-cache
 
-# Next.js build output
-.next
+# Build output
+dist
 out
 
-# Nuxt.js build / generate output
-.nuxt
-dist
-.output
+# Accidental tsc output in source folders
+src/**/*.js
+src/**/*.js.map
+test/**/*.js
+test/**/*.js.map
+!test/fixtures/**/*.js
 
 # Gatsby files
 .cache/
