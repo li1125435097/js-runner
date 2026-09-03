@@ -20,7 +20,7 @@ type DiscoveryModule = {
 };
 
 function loadDiscoveryModule(): DiscoveryModule {
-  return proxyquire.noCallThru()('../../interpreterDiscovery', {}) as DiscoveryModule;
+  return proxyquire.noCallThru()('../../interpreter/interpreterDiscovery', {}) as DiscoveryModule;
 }
 
 describe('interpreterDiscovery', () => {
@@ -66,7 +66,7 @@ describe('interpreterDiscovery', () => {
   });
 
   it('prefers Git Bash over WSL System32 bash', () => {
-    const { pickPreferredExecutable } = proxyquire.noCallThru()('../../interpreterDiscovery', {}) as {
+    const { pickPreferredExecutable } = proxyquire.noCallThru()('../../interpreter/interpreterDiscovery', {}) as {
       pickPreferredExecutable: (executable: string, candidates: string[]) => string | undefined;
     };
 

@@ -16,7 +16,7 @@ describe('registryConfig', () => {
   });
 
   it('writes and reads registry from .npmrc', () => {
-    const registryConfig = proxyquire.noCallThru()('../../registryConfig', {}) as {
+    const registryConfig = proxyquire.noCallThru()('../../packageManager/registryConfig', {}) as {
       writeRegistryToNpmrc: (dir: string, url: string) => void;
       readRegistryFromNpmrc: (dir: string) => string | undefined;
     };
@@ -28,7 +28,7 @@ describe('registryConfig', () => {
   });
 
   it('updates existing registry line in .npmrc', () => {
-    const registryConfig = proxyquire.noCallThru()('../../registryConfig', {}) as {
+    const registryConfig = proxyquire.noCallThru()('../../packageManager/registryConfig', {}) as {
       writeRegistryToNpmrc: (dir: string, url: string) => void;
       readRegistryFromNpmrc: (dir: string) => string | undefined;
     };
@@ -42,7 +42,7 @@ describe('registryConfig', () => {
   });
 
   it('resolves preset registry ids', () => {
-    const registryConfig = proxyquire.noCallThru()('../../registryConfig', {}) as {
+    const registryConfig = proxyquire.noCallThru()('../../packageManager/registryConfig', {}) as {
       resolveRegistryUrl: (packageJsonPath: string, setting: string) => string;
     };
     const packageJsonPath = path.join(tempDir, 'package.json');
@@ -56,7 +56,7 @@ describe('registryConfig', () => {
 
 describe('registryPresets', () => {
   it('finds preset by url', () => {
-    const presets = proxyquire.noCallThru()('../../registryPresets', {}) as {
+    const presets = proxyquire.noCallThru()('../../common/registryPresets', {}) as {
       findRegistryPresetByUrl: (url: string) => { id: string } | undefined;
     };
 

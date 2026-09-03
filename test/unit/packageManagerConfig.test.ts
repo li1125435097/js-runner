@@ -20,7 +20,7 @@ describe('packageManagerConfig', () => {
   });
 
   function loadConfigModule(vscodeMock: ReturnType<typeof createVscodeMock>) {
-    return proxyquire.noCallThru()('../../packageManagerConfig', {
+    return proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
       vscode: vscodeMock,
     }) as {
       ROOT_PACKAGE_KEY: string;

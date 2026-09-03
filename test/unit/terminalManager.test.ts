@@ -7,7 +7,7 @@ import { createMockTerminal, createVscodeMock } from '../helpers/vscodeMock';
 import * as proxyquire from 'proxyquire';
 
 function loadTerminalCommandModule() {
-  return proxyquire.noCallThru()('../../terminalCommand', {}) as {
+  return proxyquire.noCallThru()('../../common/terminalCommand', {}) as {
     buildRunCommand: (interpreterPath: string, filePath: string) => string;
   };
 }

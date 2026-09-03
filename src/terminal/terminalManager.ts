@@ -3,16 +3,16 @@
  */
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { openHtmlFile } from './htmlFileOpener';
-import { getInterpreterForLanguage } from './interpreterConfig';
+import { openHtmlFile } from '../common/htmlFileOpener';
+import { getInterpreterForLanguage } from '../interpreter/interpreterConfig';
 import {
   buildRunScriptCommand,
   formatScriptLabel,
   resolvePackageManager,
-} from './packageManager';
-import { buildRunCommand } from './terminalCommand';
+} from '../packageManager/packageManager';
+import { buildRunCommand } from '../common/terminalCommand';
 import { buildNpmScriptDebugConfig } from './npmScriptDebug';
-import { RunMode, RunningScript } from './types';
+import { RunMode, RunningScript } from '../common/types';
 
 let nextTerminalId = 1;
 

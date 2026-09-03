@@ -5,8 +5,8 @@ import * as vscode from 'vscode';
 import {
   getInterpreters,
   saveInterpreters,
-} from './interpreterConfig';
-import { LanguageInterpreter, LanguageInterpreterTreeItem } from './types';
+} from '../interpreter/interpreterConfig';
+import { LanguageInterpreter, LanguageInterpreterTreeItem } from '../common/types';
 
 export class LanguageInterpretersProvider
   implements vscode.TreeDataProvider<LanguageInterpreterTreeItem>, vscode.Disposable

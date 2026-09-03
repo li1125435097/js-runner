@@ -5,7 +5,7 @@ import {
   findRegistryPresetByUrl,
   getRegistryPresetById,
   normalizeRegistryUrl,
-} from './registryPresets';
+} from '../common/registryPresets';
 
 const REGISTRY_LINE = /^registry\s*=\s*(.+)$/im;
 

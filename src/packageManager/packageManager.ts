@@ -9,7 +9,7 @@ import {
   isKnownPackageManager,
   KnownPackageManager,
   quoteScriptName,
-} from './packageManagerCommands';
+} from '../common/packageManagerCommands';
 import { getPackageManagerSettings } from './packageManagerConfig';
 
 export type { KnownPackageManager };

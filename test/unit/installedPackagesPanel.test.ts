@@ -36,20 +36,20 @@ describe('installedPackagesPanel', () => {
     const vscodeMock = createVscodeMock({
       workspaceFolders: [{ uri: { fsPath: tempDir }, name: 'demo' }],
     });
-    const packageManager = proxyquire.noCallThru()('../../packageManager', {
+    const packageManager = proxyquire.noCallThru()('../../packageManager/packageManager', {
       vscode: vscodeMock,
-      './packageManagerConfig': proxyquire.noCallThru()('../../packageManagerConfig', {
+      './packageManagerConfig': proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
         vscode: vscodeMock,
       }),
     });
-    const panel = proxyquire.noCallThru()('../../installedPackagesPanel', {
+    const panel = proxyquire.noCallThru()('../../packageManager/installedPackagesPanel', {
       vscode: vscodeMock,
       './packageManager': packageManager,
-      './packageManagerConfig': proxyquire.noCallThru()('../../packageManagerConfig', {
+      './packageManagerConfig': proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
         vscode: vscodeMock,
       }),
-      './registryConfig': proxyquire.noCallThru()('../../registryConfig', {}),
-      './registryPresets': proxyquire.noCallThru()('../../registryPresets', {}),
+      './registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
+      '../common/registryPresets': proxyquire.noCallThru()('../../common/registryPresets', {}),
     }) as {
       buildInstalledPackagesSummary: (path: string) => {
         packageName: string;
@@ -76,14 +76,14 @@ describe('installedPackagesPanel', () => {
   it('filters installed package rows by dependency type', () => {
     const vscodeMock = createVscodeMock();
     const packageManager = loadPackageManagerModule(vscodeMock);
-    const panel = proxyquire.noCallThru()('../../installedPackagesPanel', {
+    const panel = proxyquire.noCallThru()('../../packageManager/installedPackagesPanel', {
       vscode: vscodeMock,
       './packageManager': packageManager,
-      './packageManagerConfig': proxyquire.noCallThru()('../../packageManagerConfig', {
+      './packageManagerConfig': proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
         vscode: vscodeMock,
       }),
-      './registryConfig': proxyquire.noCallThru()('../../registryConfig', {}),
-      './registryPresets': proxyquire.noCallThru()('../../registryPresets', {}),
+      './registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
+      '../common/registryPresets': proxyquire.noCallThru()('../../common/registryPresets', {}),
     }) as {
       filterInstalledPackageRows: (
         rows: Array<{ name: string; type: 'prod' | 'dev' | 'peer' | 'optional' }>,

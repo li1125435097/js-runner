@@ -11,14 +11,14 @@ type LanguageInterpreter = {
 };
 
 function loadInterpreterConfigModule(vscodeMock: ReturnType<typeof createVscodeMock>) {
-  const discovery = proxyquire.noCallThru()('../../interpreterDiscovery', {}) as {
+  const discovery = proxyquire.noCallThru()('../../interpreter/interpreterDiscovery', {}) as {
     setFindExecutableOverrideForTest: (
       override: ((executable: string) => string | undefined) | undefined,
     ) => void;
   };
   discovery.setFindExecutableOverrideForTest((executable: string) => `/usr/bin/${executable}`);
 
-  return proxyquire.noCallThru()('../../interpreterConfig', {
+  return proxyquire.noCallThru()('../../interpreter/interpreterConfig', {
     vscode: vscodeMock,
     './interpreterDiscovery': discovery,
   }) as {
@@ -31,7 +31,7 @@ function loadInterpreterConfigModule(vscodeMock: ReturnType<typeof createVscodeM
 describe('interpreterConfig', () => {
   afterEach(() => {
     sinon.restore();
-    const discovery = proxyquire.noCallThru()('../../interpreterDiscovery', {}) as {
+    const discovery = proxyquire.noCallThru()('../../interpreter/interpreterDiscovery', {}) as {
       setFindExecutableOverrideForTest: (
         override: ((executable: string) => string | undefined) | undefined,
       ) => void;

@@ -5,7 +5,7 @@ import {
   buildRunScriptCommand,
   formatScriptLabel,
   resolvePackageManager,
-} from './packageManager';
+} from '../packageManager/packageManager';
 
 export interface NpmScriptDebugInput {
   name: string;

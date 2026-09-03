@@ -1,7 +1,7 @@
-declare module '../../terminalManager';
-declare module '../../npmScriptDebug';
-declare module '../../types';
-declare module '../../npmScriptsProvider';
-declare module '../../interpreterConfig';
-declare module '../../runningScriptsProvider';
-declare module '../../languageInterpretersProvider';
+declare module '../../terminal/terminalManager';
+declare module '../../terminal/npmScriptDebug';
+declare module '../../common/types';
+declare module '../../providers/npmScriptsProvider';
+declare module '../../interpreter/interpreterConfig';
+declare module '../../providers/runningScriptsProvider';
+declare module '../../providers/languageInterpretersProvider';

@@ -8,9 +8,9 @@ import {
   clearPackageManagerCacheForTest,
   detectPackageManager,
   resolvePackageManager,
-} from './packageManager';
-import { getPackageManagerSettings } from './packageManagerConfig';
-import { resolveRegistryUrl } from './registryConfig';
+} from '../packageManager/packageManager';
+import { getPackageManagerSettings } from '../packageManager/packageManagerConfig';
+import { resolveRegistryUrl } from '../packageManager/registryConfig';
 import {
   PackageGroup,
   PackageGroupItem,
@@ -19,7 +19,7 @@ import {
   PackageManagerSettingItem,
   RegistrySettingItem,
   ScriptTreeItem,
-} from './types';
+} from '../common/types';
 
 type TreeElement =
   | PackageGroupItem

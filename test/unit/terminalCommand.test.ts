@@ -8,7 +8,7 @@ type TerminalCommandModule = {
 };
 
 function loadTerminalCommandModule(): TerminalCommandModule {
-  return proxyquire.noCallThru()('../../terminalCommand', {}) as TerminalCommandModule;
+  return proxyquire.noCallThru()('../../common/terminalCommand', {}) as TerminalCommandModule;
 }
 
 describe('terminalCommand', () => {

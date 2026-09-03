@@ -9,7 +9,7 @@ describe('htmlFileOpener', () => {
   });
 
   function loadHtmlFileOpener(vscodeMock: ReturnType<typeof createVscodeMock>) {
-    return proxyquire.noCallThru()('../../htmlFileOpener', {
+    return proxyquire.noCallThru()('../../common/htmlFileOpener', {
       vscode: vscodeMock,
     });
   }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { appendAvailableLocalInterpreters } from './interpreterDiscovery';
-import { LanguageInterpreter } from './types';
+import { LanguageInterpreter } from '../common/types';
 
 export const DEFAULT_INTERPRETERS: LanguageInterpreter[] = [
   { languageId: 'shellscript', label: 'Bash', path: 'bash' },

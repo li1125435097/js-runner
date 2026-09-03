@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { splitInterpreterCommand } from './terminalCommand';
-import { LanguageInterpreter } from './types';
+import { splitInterpreterCommand } from '../common/terminalCommand';
+import { LanguageInterpreter } from '../common/types';
 
 const availabilityCache = new Map<string, boolean>();
 const resolvedPathCache = new Map<string, string | undefined>();

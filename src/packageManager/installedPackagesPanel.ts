@@ -7,7 +7,7 @@ import {
 } from './packageManager';
 import { getPackageManagerSettings } from './packageManagerConfig';
 import { resolveRegistryUrl } from './registryConfig';
-import { getRegistryDisplayLabel } from './registryPresets';
+import { getRegistryDisplayLabel } from '../common/registryPresets';
 
 export type DependencyType = 'prod' | 'dev' | 'peer' | 'optional';
 

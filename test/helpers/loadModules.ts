@@ -13,22 +13,22 @@ export function loadPackageManagerModule(
     vscodeMock.__configurationStore.set(key, value);
   }
 
-  const packageManagerConfig = proxyquire.noCallThru()('../../packageManagerConfig', {
+  const packageManagerConfig = proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
     vscode: vscodeMock,
   });
 
-  return proxyquire.noCallThru()('../../packageManager', {
+  return proxyquire.noCallThru()('../../packageManager/packageManager', {
     vscode: vscodeMock,
     './packageManagerConfig': packageManagerConfig,
   });
 }
 
 export function loadTypesModule(vscodeMock: VscodeMock) {
-  return proxyquire.noCallThru()('../../types', { vscode: vscodeMock });
+  return proxyquire.noCallThru()('../../common/types', { vscode: vscodeMock });
 }
 
 export function loadInterpreterConfigModule(vscodeMock: VscodeMock) {
-  return proxyquire.noCallThru()('../../interpreterConfig', { vscode: vscodeMock });
+  return proxyquire.noCallThru()('../../interpreter/interpreterConfig', { vscode: vscodeMock });
 }
 
 export function loadTerminalManagerModule(
@@ -36,16 +36,16 @@ export function loadTerminalManagerModule(
   interpreterConfig: ReturnType<typeof loadInterpreterConfigModule>,
 ) {
   const packageManager = createPackageManagerStub(vscodeMock);
-  const npmScriptDebug = proxyquire.noCallThru()('../../npmScriptDebug', {
+  const npmScriptDebug = proxyquire.noCallThru()('../../terminal/npmScriptDebug', {
     vscode: vscodeMock,
-    './packageManager': packageManager,
+    '../packageManager/packageManager': packageManager,
   });
-  return proxyquire.noCallThru()('../../terminalManager', {
+  return proxyquire.noCallThru()('../../terminal/terminalManager', {
     vscode: vscodeMock,
-    './interpreterConfig': interpreterConfig,
-    './packageManager': packageManager,
+    '../interpreter/interpreterConfig': interpreterConfig,
+    '../packageManager/packageManager': packageManager,
     './npmScriptDebug': npmScriptDebug,
-    './htmlFileOpener': proxyquire.noCallThru()('../../htmlFileOpener', {
+    '../common/htmlFileOpener': proxyquire.noCallThru()('../../common/htmlFileOpener', {
       vscode: vscodeMock,
     }),
   }).TerminalManager;
@@ -53,14 +53,14 @@ export function loadTerminalManagerModule(
 
 export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof import('fs')) {
   const packageManager = createPackageManagerStub(vscodeMock);
-  return proxyquire.noCallThru()('../../npmScriptsProvider', {
+  return proxyquire.noCallThru()('../../providers/npmScriptsProvider', {
     vscode: vscodeMock,
-    './types': loadTypesModule(vscodeMock),
-    './packageManager': packageManager,
-    './packageManagerConfig': proxyquire.noCallThru()('../../packageManagerConfig', {
+    '../common/types': loadTypesModule(vscodeMock),
+    '../packageManager/packageManager': packageManager,
+    '../packageManager/packageManagerConfig': proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
       vscode: vscodeMock,
     }),
-    './registryConfig': proxyquire.noCallThru()('../../registryConfig', {}),
+    '../packageManager/registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
     fs,
   }).NpmScriptsProvider;
 }
@@ -71,10 +71,10 @@ export function loadRunningScriptsProviderModule(vscodeMock: VscodeMock) {
 
   return {
     TerminalManager,
-    RunningScriptsProvider: proxyquire.noCallThru()('../../runningScriptsProvider', {
+    RunningScriptsProvider: proxyquire.noCallThru()('../../providers/runningScriptsProvider', {
       vscode: vscodeMock,
-      './types': loadTypesModule(vscodeMock),
-      './terminalManager': { TerminalManager },
+      '../common/types': loadTypesModule(vscodeMock),
+      '../terminal/terminalManager': { TerminalManager },
     }).RunningScriptsProvider,
   };
 }
@@ -84,10 +84,10 @@ export function loadLanguageInterpretersProviderModule(vscodeMock: VscodeMock) {
   const types = loadTypesModule(vscodeMock);
 
   return {
-    LanguageInterpretersProvider: proxyquire.noCallThru()('../../languageInterpretersProvider', {
+    LanguageInterpretersProvider: proxyquire.noCallThru()('../../providers/languageInterpretersProvider', {
       vscode: vscodeMock,
-      './interpreterConfig': interpreterConfig,
-      './types': types,
+      '../interpreter/interpreterConfig': interpreterConfig,
+      '../common/types': types,
     }).LanguageInterpretersProvider,
     LanguageInterpreterTreeItem: types.LanguageInterpreterTreeItem,
   };
@@ -95,8 +95,8 @@ export function loadLanguageInterpretersProviderModule(vscodeMock: VscodeMock) {
 
 export function loadNpmScriptDebugModule(vscodeMock: VscodeMock) {
   const packageManager = createPackageManagerStub(vscodeMock);
-  return proxyquire.noCallThru()('../../npmScriptDebug', {
+  return proxyquire.noCallThru()('../../terminal/npmScriptDebug', {
     vscode: vscodeMock,
-    './packageManager': packageManager,
+    '../packageManager/packageManager': packageManager,
   });
 }

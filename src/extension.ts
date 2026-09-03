@@ -2,23 +2,23 @@
  * VS Code 扩展入口：注册命令、树视图，并协调 TerminalManager 与各 Provider。
  */
 import * as vscode from 'vscode';
-import { getInterpreterForLanguage } from './interpreterConfig';
-import { viewInstalledPackages } from './installedPackagesPanel';
-import { LanguageInterpretersProvider } from './languageInterpretersProvider';
-import { NpmScriptsProvider } from './npmScriptsProvider';
+import { getInterpreterForLanguage } from './interpreter/interpreterConfig';
+import { viewInstalledPackages } from './packageManager/installedPackagesPanel';
+import { LanguageInterpretersProvider } from './providers/languageInterpretersProvider';
+import { NpmScriptsProvider } from './providers/npmScriptsProvider';
 import {
   installDependencies,
   selectPackageManager,
   selectRegistry,
-} from './packageManagerUi';
-import { RunningScriptsProvider } from './runningScriptsProvider';
+} from './packageManager/packageManagerUi';
+import { RunningScriptsProvider } from './providers/runningScriptsProvider';
 import {
   LanguageInterpreterTreeItem,
   NpmScriptInfo,
   RunningScriptTreeItem,
   ScriptTreeItem,
-} from './types';
-import { TerminalManager } from './terminalManager';
+} from './common/types';
+import { TerminalManager } from './terminal/terminalManager';
 
 /** 命令参数可能是 TreeItem 或原始数据，统一解析为 NpmScriptInfo */
 function resolveNpmScript(scriptOrItem: NpmScriptInfo | ScriptTreeItem): NpmScriptInfo {

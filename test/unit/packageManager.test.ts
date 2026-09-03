@@ -100,7 +100,7 @@ describe('packageManager', () => {
 
 describe('packageManagerCommands', () => {
   it('builds run and install commands', () => {
-    const commands = proxyquire.noCallThru()('../../packageManagerCommands', {}) as {
+    const commands = proxyquire.noCallThru()('../../common/packageManagerCommands', {}) as {
       buildRunScriptCommand: (pm: string, scriptName: string) => string;
       buildInstallCommand: (pm: string) => string;
     };

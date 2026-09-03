@@ -10,7 +10,7 @@ import {
   savePackageManagerSettings,
 } from './packageManagerConfig';
 import { resolveRegistryUrl, writeRegistryToNpmrc } from './registryConfig';
-import { getRegistryDisplayLabel, REGISTRY_PRESETS } from './registryPresets';
+import { getRegistryDisplayLabel, REGISTRY_PRESETS } from '../common/registryPresets';
 
 const MANAGER_OPTIONS = [
   { label: 'auto', description: 'Detect from packageManager field and lockfiles' },
