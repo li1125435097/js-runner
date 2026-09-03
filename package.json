@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
@@ -308,7 +308,13 @@
         },
         "jsRunner.packageManager": {
           "type": "string",
-          "enum": ["auto", "npm", "yarn", "pnpm", "bun"],
+          "enum": [
+            "auto",
+            "npm",
+            "yarn",
+            "pnpm",
+            "bun"
+          ],
           "default": "auto",
           "description": "Default package manager when sidebar setting is auto."
         },
