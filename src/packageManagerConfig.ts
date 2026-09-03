@@ -11,38 +11,35 @@ const DEFAULT_SETTINGS: PackageManagerSettings = {
   registry: 'auto',
 };
 
+/** Workspace root packages use "." — empty string keys break VS Code config read/write. */
+export const ROOT_PACKAGE_KEY = '.';
+
 export function getRelativePackageKey(packageJsonPath: string): string {
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(
     vscode.Uri.file(packageJsonPath),
   );
   if (!workspaceFolder) {
-    return '';
+    return ROOT_PACKAGE_KEY;
   }
 
   const relative = path.relative(workspaceFolder.uri.fsPath, path.dirname(packageJsonPath));
   if (!relative || relative === '.') {
-    return '';
+    return ROOT_PACKAGE_KEY;
   }
 
   return relative.replace(/\\/g, '/');
 }
 
 function getSettingsMap(): Record<string, Partial<PackageManagerSettings>> {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-  const config = workspaceFolder
-    ? vscode.workspace.getConfiguration('jsRunner', workspaceFolder.uri)
-    : vscode.workspace.getConfiguration('jsRunner');
-
-  return config.get<Record<string, Partial<PackageManagerSettings>>>(
-    'packageManagerSettings',
-    {},
-  );
+  return vscode.workspace.getConfiguration('jsRunner').get<
+    Record<string, Partial<PackageManagerSettings>>
+  >('packageManagerSettings', {});
 }
 
 export function getPackageManagerSettings(packageJsonPath: string): PackageManagerSettings {
   const key = getRelativePackageKey(packageJsonPath);
   const allSettings = getSettingsMap();
-  const entry = allSettings[key] ?? allSettings[''] ?? {};
+  const entry = allSettings[key] ?? {};
 
   return {
     manager: entry.manager ?? DEFAULT_SETTINGS.manager,
@@ -57,25 +54,23 @@ export async function savePackageManagerSettings(
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(
     vscode.Uri.file(packageJsonPath),
   );
+  if (!workspaceFolder) {
+    throw new Error('JS Runner: package.json is not inside an open workspace folder.');
+  }
+
   const key = getRelativePackageKey(packageJsonPath);
-  const config = workspaceFolder
-    ? vscode.workspace.getConfiguration('jsRunner', workspaceFolder.uri)
-    : vscode.workspace.getConfiguration('jsRunner');
+  const config = vscode.workspace.getConfiguration('jsRunner');
   const current = config.get<Record<string, PackageManagerSettings>>(
     'packageManagerSettings',
     {},
   );
-  const existing = current[key] ?? DEFAULT_SETTINGS;
   const updated = {
     ...current,
     [key]: {
-      ...existing,
+      ...(current[key] ?? DEFAULT_SETTINGS),
       ...patch,
     },
   };
-  const target = workspaceFolder
-    ? vscode.ConfigurationTarget.WorkspaceFolder
-    : vscode.ConfigurationTarget.Workspace;
 
-  await config.update('packageManagerSettings', updated, target);
+  await config.update('packageManagerSettings', updated, vscode.ConfigurationTarget.Workspace);
 }

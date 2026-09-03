@@ -76,7 +76,7 @@ describe('packageManager', () => {
       workspaceFolders: [{ uri: { fsPath: tempDir }, name: 'demo' }],
       configuration: {
         'jsRunner.packageManagerSettings': {
-          '': { manager: 'bun', registry: 'auto' },
+          '.': { manager: 'bun', registry: 'auto' },
         },
       },
     });

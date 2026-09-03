@@ -238,7 +238,7 @@
         "jsRunner.packageManagerSettings": {
           "type": "object",
           "default": {},
-          "description": "Per-package package manager and registry overrides. Keys are relative paths to package directories (empty string for workspace root).",
+          "description": "Per-package package manager and registry overrides. Keys are relative paths to package directories (\".\" for workspace root). Saved in the workspace .vscode/settings.json file.",
           "additionalProperties": {
             "type": "object",
             "properties": {
