@@ -10,19 +10,25 @@ import {
   detectPackageManager,
   resolvePackageManager,
 } from '../packageManager/packageManager';
-import { getPackageManagerSettings } from '../packageManager/packageManagerConfig';
+import {
+  getPackageManagerSettings,
+  getRelativePackageKey,
+} from '../packageManager/packageManagerConfig';
 import { resolveRegistryUrl } from '../packageManager/registryConfig';
 import {
+  NpmScriptInfo,
   PackageGroup,
   PackageGroupItem,
   PackageManagerActionItem,
   PackageManagerGroupItem,
   PackageManagerSettingItem,
   RegistrySettingItem,
+  ScriptSearchItem,
   ScriptTreeItem,
 } from '../common/types';
 
 type TreeElement =
+  | ScriptSearchItem
   | PackageGroupItem
   | PackageManagerGroupItem
   | PackageManagerSettingItem
@@ -39,9 +45,90 @@ const LOCKFILE_PATTERNS = [
 ];
 
 const SCAN_DEBOUNCE_MS = 300;
+const PINNED_SCRIPTS_KEY = 'jsRunner.pinnedScripts';
+const PINNED_PACKAGES_KEY = 'jsRunner.pinnedPackages';
 
 export function isInsideNodeModules(fsPath: string): boolean {
   return fsPath.split(path.sep).includes('node_modules');
+}
+
+function normalizePathQuery(value: string): string {
+  return value.replace(/\\/g, '/').toLowerCase();
+}
+
+export function matchesPackagePath(
+  group: Pick<PackageGroup, 'packageJsonPath' | 'label'>,
+  query: string,
+): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return true;
+  }
+  const needle = normalizePathQuery(trimmed);
+  const candidates = [
+    group.packageJsonPath,
+    group.label,
+    getRelativePackageKey(group.packageJsonPath),
+  ];
+  return candidates.some((value) => normalizePathQuery(value).includes(needle));
+}
+
+export function pinnedPackageKey(packageJsonPath: string): string {
+  return getRelativePackageKey(packageJsonPath);
+}
+
+export function pinnedScriptKey(packageJsonPath: string, scriptName: string): string {
+  return `${getRelativePackageKey(packageJsonPath)}::${scriptName}`;
+}
+
+export function sortPackagesWithPins(
+  groups: PackageGroup[],
+  pinnedKeys: string[],
+): PackageGroup[] {
+  const pinnedSet = new Set(pinnedKeys);
+  const pinned: PackageGroup[] = [];
+  const unpinned: PackageGroup[] = [];
+
+  for (const group of groups) {
+    if (pinnedSet.has(pinnedPackageKey(group.packageJsonPath))) {
+      pinned.push(group);
+    } else {
+      unpinned.push(group);
+    }
+  }
+
+  pinned.sort(
+    (a, b) =>
+      pinnedKeys.indexOf(pinnedPackageKey(a.packageJsonPath)) -
+      pinnedKeys.indexOf(pinnedPackageKey(b.packageJsonPath)),
+  );
+
+  return [...pinned, ...unpinned];
+}
+
+export function sortScriptsWithPins(
+  scripts: NpmScriptInfo[],
+  pinnedKeys: string[],
+): NpmScriptInfo[] {
+  const pinnedSet = new Set(pinnedKeys);
+  const pinned: NpmScriptInfo[] = [];
+  const unpinned: NpmScriptInfo[] = [];
+
+  for (const script of scripts) {
+    if (pinnedSet.has(pinnedScriptKey(script.packageJsonPath, script.name))) {
+      pinned.push(script);
+    } else {
+      unpinned.push(script);
+    }
+  }
+
+  pinned.sort(
+    (a, b) =>
+      pinnedKeys.indexOf(pinnedScriptKey(a.packageJsonPath, a.name)) -
+      pinnedKeys.indexOf(pinnedScriptKey(b.packageJsonPath, b.name)),
+  );
+
+  return [...pinned, ...unpinned];
 }
 
 export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>, vscode.Disposable {
@@ -53,12 +140,19 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
   private readonly configListener: vscode.Disposable;
   private readonly groupItems = new Map<string, PackageGroupItem>();
   private readonly expandedPackagePaths = new Set<string>();
+  private readonly workspaceState?: vscode.Memento;
   private hasInitializedExpansion = false;
   private scanTimer: ReturnType<typeof setTimeout> | undefined;
   private scanning = false;
   private scanQueued = false;
+  private filterQuery = '';
+  private pinnedKeys: string[] = [];
+  private pinnedPackageKeys: string[] = [];
 
-  constructor() {
+  constructor(workspaceState?: vscode.Memento) {
+    this.workspaceState = workspaceState;
+    this.pinnedKeys = [...(workspaceState?.get<string[]>(PINNED_SCRIPTS_KEY, []) ?? [])];
+    this.pinnedPackageKeys = [...(workspaceState?.get<string[]>(PINNED_PACKAGES_KEY, []) ?? [])];
     void this.scanScripts();
 
     this.subscribeWatcher(
@@ -85,17 +179,26 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
         clearPackageManagerCacheForTest();
         void this.scanScripts();
       }
+      if (event.affectsConfiguration('jsRunner.pinnedForeground')) {
+        this._onDidChangeTreeData.fire(undefined);
+      }
     });
   }
 
   attachTreeView(view: vscode.TreeView<TreeElement>): void {
     this.watchers.push(
       view.onDidExpandElement((event) => {
+        if (this.isFilterActive()) {
+          return;
+        }
         if (event.element instanceof PackageGroupItem) {
           this.setGroupExpanded(event.element.group.packageJsonPath, true);
         }
       }),
       view.onDidCollapseElement((event) => {
+        if (this.isFilterActive()) {
+          return;
+        }
         if (event.element instanceof PackageGroupItem) {
           this.setGroupExpanded(event.element.group.packageJsonPath, false);
         }
@@ -111,6 +214,60 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     }
   }
 
+  setFilter(query: string): void {
+    this.filterQuery = query.trim();
+    void vscode.commands.executeCommand(
+      'setContext',
+      'jsRunner.npmScriptsFiltered',
+      this.isFilterActive(),
+    );
+    this.groupItems.clear();
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async promptFilter(): Promise<void> {
+    const value = await vscode.window.showInputBox({
+      title: 'Search Package Path',
+      prompt: 'Search packages by package.json path',
+      placeHolder: 'e.g. nested/pkg',
+      value: this.filterQuery,
+    });
+    if (value === undefined) {
+      return;
+    }
+    this.setFilter(value);
+  }
+
+  async pinNpmScript(script: NpmScriptInfo): Promise<void> {
+    const key = pinnedScriptKey(script.packageJsonPath, script.name);
+    this.pinnedKeys = [key, ...this.pinnedKeys.filter((item) => item !== key)];
+    await this.workspaceState?.update(PINNED_SCRIPTS_KEY, this.pinnedKeys);
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async unpinNpmScript(script: NpmScriptInfo): Promise<void> {
+    const key = pinnedScriptKey(script.packageJsonPath, script.name);
+    this.pinnedKeys = this.pinnedKeys.filter((item) => item !== key);
+    await this.workspaceState?.update(PINNED_SCRIPTS_KEY, this.pinnedKeys);
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async pinNpmPackage(packageJsonPath: string): Promise<void> {
+    const key = pinnedPackageKey(packageJsonPath);
+    this.pinnedPackageKeys = [key, ...this.pinnedPackageKeys.filter((item) => item !== key)];
+    await this.workspaceState?.update(PINNED_PACKAGES_KEY, this.pinnedPackageKeys);
+    this.groupItems.clear();
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async unpinNpmPackage(packageJsonPath: string): Promise<void> {
+    const key = pinnedPackageKey(packageJsonPath);
+    this.pinnedPackageKeys = this.pinnedPackageKeys.filter((item) => item !== key);
+    await this.workspaceState?.update(PINNED_PACKAGES_KEY, this.pinnedPackageKeys);
+    this.groupItems.clear();
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
   refresh(): void {
     clearPackageManagerCacheForTest();
     void this.scanScripts();
@@ -122,14 +279,17 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   getChildren(element?: TreeElement): TreeElement[] {
     if (!element) {
-      return this.groups.map((group) => {
+      const search = new ScriptSearchItem(this.filterQuery);
+      const groups = this.visibleGroups().map((group) => {
         const item = new PackageGroupItem(
           group,
-          this.expandedPackagePaths.has(group.packageJsonPath),
+          this.isGroupExpanded(group.packageJsonPath),
+          this.isPackagePinned(group.packageJsonPath),
         );
         this.groupItems.set(group.packageJsonPath, item);
         return item;
       });
+      return [search, ...groups];
     }
 
     if (element instanceof PackageGroupItem) {
@@ -138,10 +298,10 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
         return [];
       }
       this.hydrateGroupDetails(group);
-      return [
-        new PackageManagerGroupItem(group),
-        ...group.scripts.map((script) => new ScriptTreeItem(script)),
-      ];
+      const scripts = sortScriptsWithPins(group.scripts, this.pinnedKeys).map(
+        (script) => new ScriptTreeItem(script, this.isPinned(script)),
+      );
+      return [new PackageManagerGroupItem(group), ...scripts];
     }
 
     if (element instanceof PackageManagerGroupItem) {
@@ -272,6 +432,32 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     return this.groups.find((group) => group.packageJsonPath === packageJsonPath);
   }
 
+  private visibleGroups(): PackageGroup[] {
+    const groups = this.isFilterActive()
+      ? this.groups.filter((group) => matchesPackagePath(group, this.filterQuery))
+      : this.groups;
+    return sortPackagesWithPins(groups, this.pinnedPackageKeys);
+  }
+
+  private isPinned(script: NpmScriptInfo): boolean {
+    return this.pinnedKeys.includes(pinnedScriptKey(script.packageJsonPath, script.name));
+  }
+
+  private isPackagePinned(packageJsonPath: string): boolean {
+    return this.pinnedPackageKeys.includes(pinnedPackageKey(packageJsonPath));
+  }
+
+  private isFilterActive(): boolean {
+    return this.filterQuery.length > 0;
+  }
+
+  private isGroupExpanded(packageJsonPath: string): boolean {
+    if (this.isFilterActive()) {
+      return true;
+    }
+    return this.expandedPackagePaths.has(packageJsonPath);
+  }
+
   private syncExpansionState(): void {
     const currentPaths = new Set(this.groups.map((group) => group.packageJsonPath));
     for (const packageJsonPath of [...this.expandedPackagePaths]) {
@@ -288,7 +474,11 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   private emitTreeDataChange(previousSignature: string): void {
     const nextSignature = this.groupsSignature(this.groups);
-    if (nextSignature !== previousSignature || this.groupItems.size === 0) {
+    if (
+      this.isFilterActive() ||
+      nextSignature !== previousSignature ||
+      this.groupItems.size === 0
+    ) {
       this.groupItems.clear();
       this._onDidChangeTreeData.fire(undefined);
       return;

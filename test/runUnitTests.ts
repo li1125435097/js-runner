@@ -13,6 +13,7 @@ mocha.addFile(path.join(testsRoot, 'interpreterDiscovery.test.js'));
 mocha.addFile(path.join(testsRoot, 'htmlFileOpener.test.js'));
 mocha.addFile(path.join(testsRoot, 'interpreterConfig.test.js'));
 mocha.addFile(path.join(testsRoot, 'types.test.js'));
+mocha.addFile(path.join(testsRoot, 'pinnedAppearance.test.js'));
 mocha.addFile(path.join(testsRoot, 'terminalManager.test.js'));
 mocha.addFile(path.join(testsRoot, 'npmScriptDebug.test.js'));
 mocha.addFile(path.join(testsRoot, 'packageManager.test.js'));

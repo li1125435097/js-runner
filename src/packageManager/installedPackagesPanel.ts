@@ -162,11 +162,28 @@ function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 
       background: var(--vscode-editor-background);
       margin: 0;
       padding: 16px;
+      color-scheme: light;
+    }
+    body.vscode-dark,
+    body.vscode-high-contrast {
+      color-scheme: dark;
     }
     h1 { font-size: 1.2rem; margin: 0 0 8px; }
     .meta { color: var(--vscode-descriptionForeground); margin-bottom: 16px; line-height: 1.5; }
     .toolbar { margin-bottom: 12px; display: flex; gap: 12px; align-items: center; }
-    select, button {
+    select {
+      font-family: inherit;
+      font-size: inherit;
+      background-color: var(--vscode-dropdown-background);
+      color: var(--vscode-dropdown-foreground);
+      border: 1px solid var(--vscode-dropdown-border, var(--vscode-panel-border));
+      padding: 4px 8px;
+    }
+    select option {
+      background-color: var(--vscode-dropdown-listBackground, var(--vscode-dropdown-background));
+      color: var(--vscode-dropdown-foreground);
+    }
+    button {
       background: var(--vscode-button-secondaryBackground);
       color: var(--vscode-button-secondaryForeground);
       border: 1px solid var(--vscode-panel-border);

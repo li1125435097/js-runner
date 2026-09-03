@@ -32,6 +32,7 @@ export class MockTreeItem {
   command?: unknown;
   collapsibleState?: number;
   id?: string;
+  resourceUri?: unknown;
 
   constructor(label?: string, collapsibleState?: number) {
     this.label = label;
@@ -39,8 +40,12 @@ export class MockTreeItem {
   }
 }
 
-export class MockThemeIcon {
+export class MockThemeColor {
   constructor(public readonly id: string) {}
+}
+
+export class MockThemeIcon {
+  constructor(public readonly id: string, public readonly color?: unknown) {}
 }
 
 export interface MockTerminal {
@@ -76,6 +81,7 @@ export interface VscodeMockOptions {
 export interface VscodeMock {
   TreeItem: typeof MockTreeItem;
   ThemeIcon: typeof MockThemeIcon;
+  ThemeColor: typeof MockThemeColor;
   TreeItemCollapsibleState: { None: number; Collapsed: number; Expanded: number };
   ViewColumn: { Active: number; Beside: number };
   EventEmitter: typeof MockEventEmitter;
@@ -110,6 +116,7 @@ export interface VscodeMock {
     showWarningMessage: sinon.SinonStub;
     showErrorMessage: sinon.SinonStub;
     createWebviewPanel: sinon.SinonStub;
+    registerFileDecorationProvider: sinon.SinonStub;
     __createdTerminals: MockTerminal[];
     __closeTerminal: (terminal: MockTerminal) => void;
   };
@@ -138,6 +145,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
   const mock = {
     TreeItem: MockTreeItem,
     ThemeIcon: MockThemeIcon,
+    ThemeColor: MockThemeColor,
     TreeItemCollapsibleState: {
       None: 0,
       Collapsed: 1,
@@ -155,13 +163,18 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     },
     Uri: {
       file: (filePath: string) => ({
+        scheme: 'file',
         fsPath: filePath,
         toString: () => filePath,
       }),
-      parse: (url: string) => ({
-        fsPath: url,
-        toString: () => url,
-      }),
+      parse: (url: string) => {
+        const colon = url.indexOf(':');
+        return {
+          scheme: colon >= 0 ? url.slice(0, colon) : 'file',
+          fsPath: url,
+          toString: () => url,
+        };
+      },
     },
     env: {
       openExternal: sinon.stub().resolves(true),
@@ -232,14 +245,15 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         return response;
       }),
       showErrorMessage: sinon.stub().resolves(undefined),
-      createWebviewPanel: sinon.stub().callsFake(() => ({
-        webview: {
-          html: '',
-          onDidReceiveMessage: sinon.stub().returns({ dispose: sinon.stub() }),
-        },
-        reveal: sinon.stub(),
-        onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
-      })),
+        createWebviewPanel: sinon.stub().callsFake(() => ({
+          webview: {
+            html: '',
+            onDidReceiveMessage: sinon.stub().returns({ dispose: sinon.stub() }),
+          },
+          reveal: sinon.stub(),
+          onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+        })),
+        registerFileDecorationProvider: sinon.stub().returns({ dispose: sinon.stub() }),
       __createdTerminals: createdTerminals,
       __closeTerminal: (terminal: MockTerminal) => {
         for (const listener of closeTerminalListeners) {

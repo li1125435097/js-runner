@@ -1,5 +1,10 @@
 import * as vscode from 'vscode';
 import { getManagerDisplayLabel, KnownPackageManager } from './packageManagerCommands';
+import {
+  pinnedForegroundThemeColor,
+  pinnedPackageUri,
+  pinnedScriptUri,
+} from './pinnedAppearance';
 import { getRegistryDisplayLabel } from './registryPresets';
 
 /** 语言与解释器映射配置 */
@@ -62,7 +67,7 @@ export interface PackageGroup {
 
 /** npm scripts 树视图中的包分组节点 */
 export class PackageGroupItem extends vscode.TreeItem {
-  constructor(public readonly group: PackageGroup, expanded = false) {
+  constructor(public readonly group: PackageGroup, expanded = false, pinned = false) {
     super(
       group.label,
       expanded
@@ -70,9 +75,19 @@ export class PackageGroupItem extends vscode.TreeItem {
         : vscode.TreeItemCollapsibleState.Collapsed,
     );
     this.id = `package-group:${group.packageJsonPath}`;
-    this.contextValue = 'packageGroup';
-    this.iconPath = new vscode.ThemeIcon('package');
+    this.contextValue = pinned ? 'packageGroupPinned' : 'packageGroup';
+    this.iconPath = new vscode.ThemeIcon(
+      'package',
+      pinned ? pinnedForegroundThemeColor() : undefined,
+    );
+    if (pinned) {
+      this.resourceUri = pinnedPackageUri(group.packageJsonPath);
+    }
     this.tooltip = group.packageJsonPath;
+  }
+
+  get packageJsonPath(): string {
+    return this.group.packageJsonPath;
   }
 }
 
@@ -178,15 +193,43 @@ export class PackageManagerActionItem extends vscode.TreeItem {
   }
 }
 
+/** npm scripts 树视图顶部搜索行，点击后输入过滤关键词 */
+export class ScriptSearchItem extends vscode.TreeItem {
+  constructor(query: string) {
+    const trimmed = query.trim();
+    super(trimmed || 'Search package path...', vscode.TreeItemCollapsibleState.None);
+    this.id = 'npm-scripts-search';
+    this.description = trimmed ? 'Click to edit' : undefined;
+    this.tooltip = trimmed ? `Filter: ${trimmed}` : 'Search by package.json path';
+    this.iconPath = new vscode.ThemeIcon('search');
+    this.contextValue = 'npmScriptSearch';
+    this.command = {
+      command: 'jsRunner.filterNpmScripts',
+      title: 'Search Package Path',
+    };
+  }
+}
+
 /** npm scripts 树视图中的单个 script 节点，点击即可运行 */
 export class ScriptTreeItem extends vscode.TreeItem {
-  constructor(public readonly script: NpmScriptInfo) {
+  constructor(public readonly script: NpmScriptInfo, pinned = false) {
     super(script.name, vscode.TreeItemCollapsibleState.None);
     this.id = `script:${script.packageJsonPath}:${script.name}`;
     this.description = script.command;
     this.tooltip = `${script.packageManager} run ${script.name}\n${script.command}`;
-    this.iconPath = new vscode.ThemeIcon('play');
-    this.contextValue = isJsNpmScript(script.command) ? 'npmScriptJs' : 'npmScript';
+    this.iconPath = new vscode.ThemeIcon(
+      'play',
+      pinned ? pinnedForegroundThemeColor() : undefined,
+    );
+    if (pinned) {
+      this.resourceUri = pinnedScriptUri(script.packageJsonPath, script.name);
+    }
+    const isJs = isJsNpmScript(script.command);
+    if (pinned) {
+      this.contextValue = isJs ? 'npmScriptJsPinned' : 'npmScriptPinned';
+    } else {
+      this.contextValue = isJs ? 'npmScriptJs' : 'npmScript';
+    }
     this.command = {
       command: 'jsRunner.runNpmScript',
       title: 'Run Script',

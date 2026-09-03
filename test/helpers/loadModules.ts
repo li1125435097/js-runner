@@ -24,7 +24,19 @@ export function loadPackageManagerModule(
 }
 
 export function loadTypesModule(vscodeMock: VscodeMock) {
-  return proxyquire.noCallThru()('../../common/types', { vscode: vscodeMock });
+  const pinnedAppearance = proxyquire.noCallThru()('../../common/pinnedAppearance', {
+    vscode: vscodeMock,
+  });
+  return proxyquire.noCallThru()('../../common/types', {
+    vscode: vscodeMock,
+    './pinnedAppearance': pinnedAppearance,
+  });
+}
+
+export function loadPinnedAppearanceModule(vscodeMock: VscodeMock) {
+  return proxyquire.noCallThru()('../../common/pinnedAppearance', {
+    vscode: vscodeMock,
+  });
 }
 
 export function loadInterpreterConfigModule(vscodeMock: VscodeMock) {
@@ -63,14 +75,51 @@ export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof 
     '../packageManager/registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
     fs,
   }) as {
-    NpmScriptsProvider: new () => {
+    NpmScriptsProvider: new (workspaceState?: {
+      get: <T>(key: string, defaultValue?: T) => T | undefined;
+      update: (key: string, value: unknown) => Promise<void>;
+    }) => {
       getChildren: (element?: unknown) => unknown[];
       refresh: () => void;
       dispose: () => void;
       setGroupExpanded: (packageJsonPath: string, expanded: boolean) => void;
+      setFilter: (query: string) => void;
+      pinNpmScript: (script: {
+        name: string;
+        command: string;
+        packageJsonPath: string;
+        packageManager: string;
+      }) => Promise<void>;
+      unpinNpmScript: (script: {
+        name: string;
+        command: string;
+        packageJsonPath: string;
+        packageManager: string;
+      }) => Promise<void>;
+      pinNpmPackage: (packageJsonPath: string) => Promise<void>;
+      unpinNpmPackage: (packageJsonPath: string) => Promise<void>;
       onDidChangeTreeData: (listener: (element: unknown) => void) => { dispose: () => void };
     };
     isInsideNodeModules: (fsPath: string) => boolean;
+    matchesPackagePath: (
+      group: { packageJsonPath: string; label: string },
+      query: string,
+    ) => boolean;
+    pinnedScriptKey: (packageJsonPath: string, scriptName: string) => string;
+    pinnedPackageKey: (packageJsonPath: string) => string;
+    sortScriptsWithPins: (
+      scripts: Array<{
+        name: string;
+        command: string;
+        packageJsonPath: string;
+        packageManager: string;
+      }>,
+      pinnedKeys: string[],
+    ) => Array<{ name: string }>;
+    sortPackagesWithPins: (
+      groups: Array<{ packageJsonPath: string; label: string }>,
+      pinnedKeys: string[],
+    ) => Array<{ label: string }>;
     SCAN_DEBOUNCE_MS: number;
   };
 }

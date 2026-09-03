@@ -54,6 +54,36 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "jsRunner.filterNpmScripts",
+        "title": "Search Package Path",
+        "icon": "$(search)"
+      },
+      {
+        "command": "jsRunner.clearNpmScriptsFilter",
+        "title": "Clear Search",
+        "icon": "$(close)"
+      },
+      {
+        "command": "jsRunner.pinNpmScript",
+        "title": "Pin",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "jsRunner.unpinNpmScript",
+        "title": "Unpin",
+        "icon": "$(pinned)"
+      },
+      {
+        "command": "jsRunner.pinNpmPackage",
+        "title": "Pin",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "jsRunner.unpinNpmPackage",
+        "title": "Unpin",
+        "icon": "$(pinned)"
+      },
+      {
         "command": "jsRunner.runNpmScript",
         "title": "Run NPM Script",
         "icon": "$(play)"
@@ -156,9 +186,19 @@
       ],
       "view/title": [
         {
+          "command": "jsRunner.filterNpmScripts",
+          "when": "view == npmScriptsView && jsRunner.active",
+          "group": "navigation@1"
+        },
+        {
+          "command": "jsRunner.clearNpmScriptsFilter",
+          "when": "view == npmScriptsView && jsRunner.active && jsRunner.npmScriptsFiltered",
+          "group": "navigation@2"
+        },
+        {
           "command": "jsRunner.refreshScripts",
           "when": "view == npmScriptsView && jsRunner.active",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "jsRunner.addInterpreter",
@@ -169,13 +209,33 @@
       "view/item/context": [
         {
           "command": "jsRunner.runNpmScript",
-          "when": "view == npmScriptsView && (viewItem == npmScript || viewItem == npmScriptJs)",
+          "when": "view == npmScriptsView && (viewItem == npmScript || viewItem == npmScriptJs || viewItem == npmScriptPinned || viewItem == npmScriptJsPinned)",
           "group": "inline@1"
         },
         {
           "command": "jsRunner.debugNpmScript",
-          "when": "view == npmScriptsView && viewItem == npmScriptJs",
+          "when": "view == npmScriptsView && (viewItem == npmScriptJs || viewItem == npmScriptJsPinned)",
           "group": "inline@2"
+        },
+        {
+          "command": "jsRunner.pinNpmScript",
+          "when": "view == npmScriptsView && (viewItem == npmScript || viewItem == npmScriptJs)",
+          "group": "inline@3"
+        },
+        {
+          "command": "jsRunner.unpinNpmScript",
+          "when": "view == npmScriptsView && (viewItem == npmScriptPinned || viewItem == npmScriptJsPinned)",
+          "group": "inline@3"
+        },
+        {
+          "command": "jsRunner.pinNpmPackage",
+          "when": "view == npmScriptsView && viewItem == packageGroup",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.unpinNpmPackage",
+          "when": "view == npmScriptsView && viewItem == packageGroupPinned",
+          "group": "inline@1"
         },
         {
           "command": "jsRunner.selectPackageManager",
@@ -226,9 +286,26 @@
         "when": "editorTextFocus && jsRunner.canRunCurrentFile"
       }
     ],
+    "colors": [
+      {
+        "id": "jsRunner.pinnedForeground",
+        "description": "Foreground color for pinned packages and scripts in the NPM Scripts view.",
+        "defaults": {
+          "dark": "#E75480",
+          "light": "#E75480",
+          "highContrast": "#E75480"
+        }
+      }
+    ],
     "configuration": {
       "title": "JS Runner",
       "properties": {
+        "jsRunner.pinnedForeground": {
+          "type": "string",
+          "default": "#E75480",
+          "format": "color",
+          "description": "Foreground color for pinned packages and scripts in the NPM Scripts view. Change this in user settings."
+        },
         "jsRunner.packageManager": {
           "type": "string",
           "enum": ["auto", "npm", "yarn", "pnpm", "bun"],

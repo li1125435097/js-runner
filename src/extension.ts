@@ -13,6 +13,10 @@ import {
 } from './packageManager/packageManagerUi';
 import { RunningScriptsProvider } from './providers/runningScriptsProvider';
 import {
+  PinnedDecorationProvider,
+  syncPinnedForegroundColorCustomization,
+} from './common/pinnedAppearance';
+import {
   LanguageInterpreterTreeItem,
   NpmScriptInfo,
   RunningScriptTreeItem,
@@ -58,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
   updateRunContext(vscode.window.activeTextEditor);
 
   const terminalManager = new TerminalManager();
-  const npmScriptsProvider = new NpmScriptsProvider();
+  const npmScriptsProvider = new NpmScriptsProvider(context.workspaceState);
   const runningScriptsProvider = new RunningScriptsProvider(terminalManager);
   const languageInterpretersProvider = new LanguageInterpretersProvider();
 
@@ -75,6 +79,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   npmScriptsProvider.refresh();
+  void syncPinnedForegroundColorCustomization();
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -89,7 +94,11 @@ export function activate(context: vscode.ExtensionContext): void {
       ) {
         updateRunContext(vscode.window.activeTextEditor);
       }
+      if (event.affectsConfiguration('jsRunner.pinnedForeground')) {
+        void syncPinnedForegroundColorCustomization();
+      }
     }),
+    vscode.window.registerFileDecorationProvider(new PinnedDecorationProvider()),
     terminalManager,
     npmScriptsProvider,
     runningScriptsProvider,
@@ -119,6 +128,36 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('jsRunner.refreshScripts', () => {
       npmScriptsProvider.refresh();
     }),
+    vscode.commands.registerCommand('jsRunner.filterNpmScripts', () => {
+      void npmScriptsProvider.promptFilter();
+    }),
+    vscode.commands.registerCommand('jsRunner.clearNpmScriptsFilter', () => {
+      npmScriptsProvider.setFilter('');
+    }),
+    vscode.commands.registerCommand(
+      'jsRunner.pinNpmScript',
+      (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {
+        void npmScriptsProvider.pinNpmScript(resolveNpmScript(scriptOrItem));
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.unpinNpmScript',
+      (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {
+        void npmScriptsProvider.unpinNpmScript(resolveNpmScript(scriptOrItem));
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.pinNpmPackage',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        void npmScriptsProvider.pinNpmPackage(resolvePackageJsonPath(pathOrItem));
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.unpinNpmPackage',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        void npmScriptsProvider.unpinNpmPackage(resolvePackageJsonPath(pathOrItem));
+      },
+    ),
     vscode.commands.registerCommand(
       'jsRunner.runNpmScript',
       (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {

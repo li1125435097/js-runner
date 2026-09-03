@@ -11,24 +11,38 @@ function loadTypes(vscodeMock: ReturnType<typeof createVscodeMock>) {
         scripts: unknown[];
       },
       expanded?: boolean,
+      pinned?: boolean,
     ) => {
       label?: string;
       contextValue?: string;
       tooltip?: string;
       collapsibleState?: number;
       id?: string;
+      iconPath?: { id: string; color?: { id: string } };
+      resourceUri?: { scheme: string; toString: () => string };
     };
-    ScriptTreeItem: new (script: {
-      name: string;
-      command: string;
-      packageJsonPath: string;
-      packageManager: string;
-    }) => {
+    ScriptSearchItem: new (query: string) => {
+      label?: string;
+      description?: string;
+      contextValue?: string;
+      command?: unknown;
+    };
+    ScriptTreeItem: new (
+      script: {
+        name: string;
+        command: string;
+        packageJsonPath: string;
+        packageManager: string;
+      },
+      pinned?: boolean,
+    ) => {
       label?: string;
       description?: string;
       contextValue?: string;
       command?: unknown;
       id?: string;
+      iconPath?: { id: string; color?: { id: string } };
+      resourceUri?: { scheme: string; toString: () => string };
     };
     LanguageInterpreterTreeItem: new (interpreter: {
       languageId: string;
@@ -71,6 +85,19 @@ describe('types tree items', () => {
       true,
     );
     expect(expanded.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Expanded);
+
+    const pinned = new PackageGroupItem(
+      {
+        packageJsonPath: '/workspace/package.json',
+        label: 'workspace',
+        scripts: [],
+      },
+      false,
+      true,
+    );
+    expect(pinned.contextValue).to.equal('packageGroupPinned');
+    expect(pinned.iconPath?.color?.id).to.equal('jsRunner.pinnedForeground');
+    expect(pinned.resourceUri?.scheme).to.equal('js-runner-pin');
   });
 
   it('creates npm script tree item wired to run command', () => {
@@ -106,6 +133,50 @@ describe('types tree items', () => {
     const item = new ScriptTreeItem(script);
 
     expect(item.contextValue).to.equal('npmScript');
+  });
+
+  it('creates search row with empty and active query labels', () => {
+    const vscodeMock = createVscodeMock();
+    const { ScriptSearchItem } = loadTypes(vscodeMock);
+
+    const empty = new ScriptSearchItem('');
+    expect(empty.label).to.equal('Search package path...');
+    expect(empty.description).to.equal(undefined);
+    expect(empty.contextValue).to.equal('npmScriptSearch');
+    expect(empty.command).to.deep.include({ command: 'jsRunner.filterNpmScripts' });
+
+    const filtered = new ScriptSearchItem('build');
+    expect(filtered.label).to.equal('build');
+    expect(filtered.description).to.equal('Click to edit');
+  });
+
+  it('marks pinned npm scripts with pinned context', () => {
+    const vscodeMock = createVscodeMock();
+    const { ScriptTreeItem } = loadTypes(vscodeMock);
+
+    const jsItem = new ScriptTreeItem(
+      {
+        name: 'build',
+        command: 'tsc',
+        packageJsonPath: '/workspace/package.json',
+        packageManager: 'npm',
+      },
+      true,
+    );
+    expect(jsItem.contextValue).to.equal('npmScriptJsPinned');
+    expect(jsItem.iconPath?.color?.id).to.equal('jsRunner.pinnedForeground');
+    expect(jsItem.resourceUri?.scheme).to.equal('js-runner-pin');
+
+    const otherItem = new ScriptTreeItem(
+      {
+        name: 'lint',
+        command: 'echo lint',
+        packageJsonPath: '/workspace/package.json',
+        packageManager: 'pnpm',
+      },
+      true,
+    );
+    expect(otherItem.contextValue).to.equal('npmScriptPinned');
   });
 
   it('creates language interpreter tree item', () => {
