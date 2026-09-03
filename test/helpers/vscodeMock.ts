@@ -31,6 +31,7 @@ export class MockTreeItem {
   iconPath?: unknown;
   command?: unknown;
   collapsibleState?: number;
+  id?: string;
 
   constructor(label?: string, collapsibleState?: number) {
     this.label = label;
@@ -76,6 +77,7 @@ export interface VscodeMock {
   TreeItem: typeof MockTreeItem;
   ThemeIcon: typeof MockThemeIcon;
   TreeItemCollapsibleState: { None: number; Collapsed: number; Expanded: number };
+  ViewColumn: { Active: number; Beside: number };
   EventEmitter: typeof MockEventEmitter;
   ConfigurationTarget: { Global: number; Workspace: number; WorkspaceFolder: number };
   Uri: {
@@ -107,6 +109,7 @@ export interface VscodeMock {
     showInputBox: sinon.SinonStub;
     showWarningMessage: sinon.SinonStub;
     showErrorMessage: sinon.SinonStub;
+    createWebviewPanel: sinon.SinonStub;
     __createdTerminals: MockTerminal[];
     __closeTerminal: (terminal: MockTerminal) => void;
   };
@@ -140,6 +143,10 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
       Collapsed: 1,
       Expanded: 2,
     },
+    ViewColumn: {
+      Active: 1,
+      Beside: 2,
+    },
     EventEmitter: MockEventEmitter,
     ConfigurationTarget: {
       Global: 1,
@@ -169,12 +176,12 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         );
       },
       findFiles: sinon.stub().resolves(options.workspaceFiles ?? []),
-      createFileSystemWatcher: sinon.stub().returns({
+      createFileSystemWatcher: sinon.stub().callsFake(() => ({
         onDidChange: sinon.stub(),
         onDidCreate: sinon.stub(),
         onDidDelete: sinon.stub(),
         dispose: sinon.stub(),
-      }),
+      })),
       onDidChangeWorkspaceFolders: workspaceFolderListener.event.bind(workspaceFolderListener),
       onDidChangeConfiguration: configChangeEmitter.event.bind(configChangeEmitter),
       getConfiguration: sinon.stub().callsFake((section?: string) => ({
@@ -225,6 +232,14 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         return response;
       }),
       showErrorMessage: sinon.stub().resolves(undefined),
+      createWebviewPanel: sinon.stub().callsFake(() => ({
+        webview: {
+          html: '',
+          onDidReceiveMessage: sinon.stub().returns({ dispose: sinon.stub() }),
+        },
+        reveal: sinon.stub(),
+        onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+      })),
       __createdTerminals: createdTerminals,
       __closeTerminal: (terminal: MockTerminal) => {
         for (const listener of closeTerminalListeners) {

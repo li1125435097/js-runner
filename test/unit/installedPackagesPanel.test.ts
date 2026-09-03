@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as proxyquire from 'proxyquire';
+import * as sinon from 'sinon';
 import { loadPackageManagerModule } from '../helpers/loadModules';
 import { createVscodeMock } from '../helpers/vscodeMock';
 
@@ -99,5 +100,44 @@ describe('installedPackagesPanel', () => {
     expect(panel.filterInstalledPackageRows(rows, 'dev')).to.deep.equal([
       { name: 'typescript', type: 'dev' },
     ]);
+  });
+
+  it('opens installed packages in the active editor column on click', () => {
+    const vscodeMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: tempDir }, name: 'demo' }],
+    });
+    const packageManager = loadPackageManagerModule(vscodeMock);
+    const panel = proxyquire.noCallThru()('../../packageManager/installedPackagesPanel', {
+      vscode: vscodeMock,
+      './packageManager': packageManager,
+      './packageManagerConfig': proxyquire.noCallThru()('../../packageManager/packageManagerConfig', {
+        vscode: vscodeMock,
+      }),
+      './registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
+      '../common/registryPresets': proxyquire.noCallThru()('../../common/registryPresets', {}),
+    }) as {
+      viewInstalledPackages: (
+        path: string,
+        context: { subscriptions: unknown[] },
+      ) => void;
+      buildInstalledPackagesSummary: (path: string) => unknown;
+    };
+
+    panel.viewInstalledPackages(packageJsonPath, { subscriptions: [] });
+
+    expect(vscodeMock.window.createWebviewPanel.calledOnce).to.be.true;
+    expect(vscodeMock.window.createWebviewPanel.firstCall.args[2]).to.equal(
+      vscodeMock.ViewColumn.Active,
+    );
+    expect(vscodeMock.window.createWebviewPanel.firstCall.args[2]).to.not.equal(
+      vscodeMock.ViewColumn.Beside,
+    );
+
+    const created = vscodeMock.window.createWebviewPanel.firstCall.returnValue as {
+      reveal: sinon.SinonStub;
+    };
+    panel.viewInstalledPackages(packageJsonPath, { subscriptions: [] });
+    expect(vscodeMock.window.createWebviewPanel.calledOnce).to.be.true;
+    expect(created.reveal.calledOnceWithExactly(vscodeMock.ViewColumn.Active)).to.be.true;
   });
 });

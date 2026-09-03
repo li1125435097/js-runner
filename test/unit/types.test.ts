@@ -4,17 +4,32 @@ import { createMockTerminal, createVscodeMock } from '../helpers/vscodeMock';
 
 function loadTypes(vscodeMock: ReturnType<typeof createVscodeMock>) {
   return loadTypesModule(vscodeMock) as {
-    PackageGroupItem: new (group: {
-      packageJsonPath: string;
-      label: string;
-      scripts: unknown[];
-    }) => { label?: string; contextValue?: string; tooltip?: string };
+    PackageGroupItem: new (
+      group: {
+        packageJsonPath: string;
+        label: string;
+        scripts: unknown[];
+      },
+      expanded?: boolean,
+    ) => {
+      label?: string;
+      contextValue?: string;
+      tooltip?: string;
+      collapsibleState?: number;
+      id?: string;
+    };
     ScriptTreeItem: new (script: {
       name: string;
       command: string;
       packageJsonPath: string;
       packageManager: string;
-    }) => { label?: string; description?: string; contextValue?: string; command?: unknown };
+    }) => {
+      label?: string;
+      description?: string;
+      contextValue?: string;
+      command?: unknown;
+      id?: string;
+    };
     LanguageInterpreterTreeItem: new (interpreter: {
       languageId: string;
       label?: string;
@@ -44,6 +59,18 @@ describe('types tree items', () => {
     expect(item.label).to.equal('workspace');
     expect(item.contextValue).to.equal('packageGroup');
     expect(item.tooltip).to.equal('/workspace/package.json');
+    expect(item.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Collapsed);
+    expect(item.id).to.equal('package-group:/workspace/package.json');
+
+    const expanded = new PackageGroupItem(
+      {
+        packageJsonPath: '/workspace/package.json',
+        label: 'workspace',
+        scripts: [],
+      },
+      true,
+    );
+    expect(expanded.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Expanded);
   });
 
   it('creates npm script tree item wired to run command', () => {
@@ -59,6 +86,7 @@ describe('types tree items', () => {
 
     expect(item.label).to.equal('build');
     expect(item.description).to.equal('tsc');
+    expect(item.id).to.equal('script:/workspace/package.json:build');
     expect(item.contextValue).to.equal('npmScriptJs');
     expect(item.command).to.deep.include({
       command: 'jsRunner.runNpmScript',

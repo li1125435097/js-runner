@@ -62,7 +62,17 @@ export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof 
     }),
     '../packageManager/registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
     fs,
-  }).NpmScriptsProvider;
+  }) as {
+    NpmScriptsProvider: new () => {
+      getChildren: (element?: unknown) => unknown[];
+      refresh: () => void;
+      dispose: () => void;
+      setGroupExpanded: (packageJsonPath: string, expanded: boolean) => void;
+      onDidChangeTreeData: (listener: (element: unknown) => void) => { dispose: () => void };
+    };
+    isInsideNodeModules: (fsPath: string) => boolean;
+    SCAN_DEBOUNCE_MS: number;
+  };
 }
 
 export function loadRunningScriptsProviderModule(vscodeMock: VscodeMock) {

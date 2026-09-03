@@ -237,7 +237,7 @@ export function viewInstalledPackages(
 ): void {
   const existing = openPanels.get(packageJsonPath);
   if (existing) {
-    existing.reveal();
+    existing.reveal(vscode.ViewColumn.Active);
     return;
   }
 
@@ -247,7 +247,7 @@ export function viewInstalledPackages(
   const panel = vscode.window.createWebviewPanel(
     'jsRunnerInstalledPackages',
     `Packages: ${summary.packageName}`,
-    vscode.ViewColumn.Beside,
+    vscode.ViewColumn.Active,
     { enableScripts: true, retainContextWhenHidden: true },
   );
 

@@ -58,23 +58,29 @@ export interface PackageGroup {
   managerSetting: string;
   registrySetting: string;
   registryUrl: string;
-  hasNodeModules: boolean;
 }
 
 /** npm scripts 树视图中的包分组节点 */
 export class PackageGroupItem extends vscode.TreeItem {
-  constructor(public readonly group: PackageGroup) {
-    super(group.label, vscode.TreeItemCollapsibleState.Expanded);
+  constructor(public readonly group: PackageGroup, expanded = false) {
+    super(
+      group.label,
+      expanded
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.Collapsed,
+    );
+    this.id = `package-group:${group.packageJsonPath}`;
     this.contextValue = 'packageGroup';
     this.iconPath = new vscode.ThemeIcon('package');
     this.tooltip = group.packageJsonPath;
   }
 }
 
-/** Package Manager 折叠区 */
+/** Package Manager 折叠区：随父包展开，scripts 保持可见 */
 export class PackageManagerGroupItem extends vscode.TreeItem {
   constructor(public readonly group: PackageGroup) {
     super('Package Manager', vscode.TreeItemCollapsibleState.Expanded);
+    this.id = `package-manager:${group.packageJsonPath}`;
     this.contextValue = 'packageManagerGroup';
     this.iconPath = new vscode.ThemeIcon('settings-gear');
     this.tooltip = `Package manager settings for ${group.label}`;
@@ -94,6 +100,7 @@ export class PackageManagerSettingItem extends vscode.TreeItem {
       group.resolvedManager,
     );
     super('Manager', vscode.TreeItemCollapsibleState.None);
+    this.id = `package-manager-setting:${group.packageJsonPath}`;
     this.description = label;
     this.tooltip = `Package manager: ${label}\nClick to change`;
     this.iconPath = new vscode.ThemeIcon('terminal');
@@ -115,6 +122,7 @@ export class RegistrySettingItem extends vscode.TreeItem {
   constructor(public readonly group: PackageGroup) {
     const label = getRegistryDisplayLabel(group.registrySetting, group.registryUrl);
     super('Registry', vscode.TreeItemCollapsibleState.None);
+    this.id = `registry-setting:${group.packageJsonPath}`;
     this.description = label;
     this.tooltip = `Registry: ${label}\n${group.registryUrl}\nClick to change`;
     this.iconPath = new vscode.ThemeIcon('cloud-download');
@@ -155,6 +163,7 @@ export class PackageManagerActionItem extends vscode.TreeItem {
     } as const;
 
     super(labels[action], vscode.TreeItemCollapsibleState.None);
+    this.id = `package-manager-action:${action}:${group.packageJsonPath}`;
     this.iconPath = new vscode.ThemeIcon(icons[action]);
     this.contextValue = contextValues[action];
     this.command = {
@@ -173,6 +182,7 @@ export class PackageManagerActionItem extends vscode.TreeItem {
 export class ScriptTreeItem extends vscode.TreeItem {
   constructor(public readonly script: NpmScriptInfo) {
     super(script.name, vscode.TreeItemCollapsibleState.None);
+    this.id = `script:${script.packageJsonPath}:${script.name}`;
     this.description = script.command;
     this.tooltip = `${script.packageManager} run ${script.name}\n${script.command}`;
     this.iconPath = new vscode.ThemeIcon('play');

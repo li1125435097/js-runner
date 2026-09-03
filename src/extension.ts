@@ -66,6 +66,7 @@ export function activate(context: vscode.ExtensionContext): void {
     treeDataProvider: npmScriptsProvider,
     showCollapseAll: true,
   });
+  npmScriptsProvider.attachTreeView(npmScriptsView);
   const runningScriptsView = vscode.window.createTreeView('runningScriptsView', {
     treeDataProvider: runningScriptsProvider,
   });
@@ -147,7 +148,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       'jsRunner.installDependencies',
       (pathOrItem: string | { packageJsonPath: string }) => {
-        void installDependencies(pathOrItem, () => npmScriptsProvider.refresh());
+        void installDependencies(pathOrItem);
       },
     ),
     vscode.commands.registerCommand(

@@ -163,10 +163,7 @@ export async function selectRegistry(
   });
 }
 
-export async function installDependencies(
-  item: unknown,
-  refresh?: () => void,
-): Promise<void> {
+export async function installDependencies(item: unknown): Promise<void> {
   const packageJsonPath = resolvePackageJsonPath(item);
   const packageDir = path.dirname(packageJsonPath);
   const nodeModulesPath = path.join(packageDir, 'node_modules');
@@ -196,5 +193,4 @@ export async function installDependencies(
   });
   terminal.show();
   terminal.sendText(buildInstallCommand(pm));
-  refresh?.();
 }
