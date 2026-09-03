@@ -25,6 +25,10 @@ suite('JS Runner extension integration', () => {
       'jsRunner.refreshScripts',
       'jsRunner.runNpmScript',
       'jsRunner.debugNpmScript',
+      'jsRunner.selectPackageManager',
+      'jsRunner.selectRegistry',
+      'jsRunner.installDependencies',
+      'jsRunner.viewInstalledPackages',
       'jsRunner.focusRunningTerminal',
       'jsRunner.addInterpreter',
       'jsRunner.editInterpreter',
@@ -76,6 +80,7 @@ suite('JS Runner extension integration', () => {
       name: 'build',
       command: 'echo build-ok',
       packageJsonPath: rootPackageJson,
+      packageManager: 'npm',
     };
 
     await assert.doesNotReject(async () => {

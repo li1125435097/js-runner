@@ -2,7 +2,8 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as proxyquire from 'proxyquire';
+import { loadNpmScriptDebugModule } from '../helpers/loadModules';
+import { createVscodeMock } from '../helpers/vscodeMock';
 
 type NpmScriptDebugModule = {
   buildNpmScriptDebugConfig: (input: {
@@ -19,8 +20,8 @@ type NpmScriptDebugModule = {
   splitCommandLine: (command: string) => string[];
 };
 
-function loadNpmScriptDebugModule(): NpmScriptDebugModule {
-  return proxyquire.noCallThru()('../../npmScriptDebug', {}) as NpmScriptDebugModule;
+function loadNpmScriptDebugModuleWithMock(): NpmScriptDebugModule {
+  return loadNpmScriptDebugModule(createVscodeMock()) as NpmScriptDebugModule;
 }
 
 function writePackageBin(
@@ -45,7 +46,7 @@ describe('npmScriptDebug', () => {
   let splitCommandLine: NpmScriptDebugModule['splitCommandLine'];
 
   beforeEach(() => {
-    ({ buildNpmScriptDebugConfig, splitCommandLine } = loadNpmScriptDebugModule());
+    ({ buildNpmScriptDebugConfig, splitCommandLine } = loadNpmScriptDebugModuleWithMock());
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'js-runner-debug-'));
     fs.writeFileSync(path.join(tempDir, 'package.json'), '{}');
   });

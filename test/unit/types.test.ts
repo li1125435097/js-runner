@@ -13,6 +13,7 @@ function loadTypes(vscodeMock: ReturnType<typeof createVscodeMock>) {
       name: string;
       command: string;
       packageJsonPath: string;
+      packageManager: string;
     }) => { label?: string; description?: string; contextValue?: string; command?: unknown };
     LanguageInterpreterTreeItem: new (interpreter: {
       languageId: string;
@@ -52,6 +53,7 @@ describe('types tree items', () => {
       name: 'build',
       command: 'tsc',
       packageJsonPath: '/workspace/package.json',
+      packageManager: 'npm',
     };
     const item = new ScriptTreeItem(script);
 
@@ -71,6 +73,7 @@ describe('types tree items', () => {
       name: 'lint',
       command: 'echo lint',
       packageJsonPath: '/workspace/package.json',
+      packageManager: 'pnpm',
     };
     const item = new ScriptTreeItem(script);
 

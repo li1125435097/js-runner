@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
@@ -67,6 +67,26 @@
         "command": "jsRunner.focusRunningTerminal",
         "title": "Focus Running Terminal",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "jsRunner.viewInstalledPackages",
+        "title": "View Installed Packages",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "jsRunner.selectPackageManager",
+        "title": "Select Package Manager",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "jsRunner.selectRegistry",
+        "title": "Select Registry",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "jsRunner.installDependencies",
+        "title": "Install Dependencies",
+        "icon": "$(cloud-download)"
       },
       {
         "command": "jsRunner.addInterpreter",
@@ -158,6 +178,26 @@
           "group": "inline@2"
         },
         {
+          "command": "jsRunner.selectPackageManager",
+          "when": "view == npmScriptsView && viewItem == packageManagerSetting",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.selectRegistry",
+          "when": "view == npmScriptsView && viewItem == registrySetting",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.installDependencies",
+          "when": "view == npmScriptsView && viewItem == packageManagerInstall",
+          "group": "inline@1"
+        },
+        {
+          "command": "jsRunner.viewInstalledPackages",
+          "when": "view == npmScriptsView && viewItem == packageManagerViewPackages",
+          "group": "inline@1"
+        },
+        {
           "command": "jsRunner.stopTerminal",
           "when": "view == runningScriptsView && viewItem == runningScript",
           "group": "inline"
@@ -189,6 +229,30 @@
     "configuration": {
       "title": "JS Runner",
       "properties": {
+        "jsRunner.packageManager": {
+          "type": "string",
+          "enum": ["auto", "npm", "yarn", "pnpm", "bun"],
+          "default": "auto",
+          "description": "Default package manager when sidebar setting is auto."
+        },
+        "jsRunner.packageManagerSettings": {
+          "type": "object",
+          "default": {},
+          "description": "Per-package package manager and registry overrides. Keys are relative paths to package directories (empty string for workspace root).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "manager": {
+                "type": "string",
+                "description": "Package manager: auto, npm, yarn, pnpm, bun, or custom CLI name"
+              },
+              "registry": {
+                "type": "string",
+                "description": "Registry preset id, auto, or custom URL"
+              }
+            }
+          }
+        },
         "jsRunner.interpreters": {
           "type": "array",
           "default": [
@@ -261,7 +325,7 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "package": "vsce package",
-    "install:plugin": "cursor --install-extension js-runner-kit-0.0.4.vsix",
+    "install:plugin": "cursor --install-extension js-runner-kit-0.0.5.vsix",
     "test:unit": "npm run compile:test && node dist/test/runUnitTests.js",
     "test:integration": "npm run compile:test && node dist/test/runIntegrationTests.js",
     "test": "npm run test:unit && npm run test:integration",

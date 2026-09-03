@@ -5,6 +5,11 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { openHtmlFile } from './htmlFileOpener';
 import { getInterpreterForLanguage } from './interpreterConfig';
+import {
+  buildRunScriptCommand,
+  formatScriptLabel,
+  resolvePackageManager,
+} from './packageManager';
 import { buildRunCommand } from './terminalCommand';
 import { buildNpmScriptDebugConfig } from './npmScriptDebug';
 import { RunMode, RunningScript } from './types';
@@ -93,22 +98,24 @@ export class TerminalManager implements vscode.Disposable {
     });
   }
 
-  /** 在 package.json 所在目录执行 npm run */
+  /** 在 package.json 所在目录执行 package script */
   runNpmScript(name: string, packageJsonPath: string): void {
     const dir = path.dirname(packageJsonPath);
+    const pm = resolvePackageManager(packageJsonPath);
     const terminal = vscode.window.createTerminal({
-      name: `npm: ${name}`,
+      name: formatScriptLabel(pm, name),
       cwd: dir,
     });
 
     terminal.show();
-    terminal.sendText(`npm run ${name}`);
+    terminal.sendText(buildRunScriptCommand(pm, name));
 
     this.trackRunningScript({
       terminal,
       name,
       type: 'npm',
       packageJsonPath,
+      packageManager: pm,
     });
   }
 

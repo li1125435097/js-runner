@@ -43,7 +43,11 @@ describe('NpmScriptsProvider', () => {
 
     const rootGroup = groups.find((item: { label?: string }) => item.label === 'workspace');
     expect(rootGroup).to.exist;
-    const rootScripts = provider.getChildren(rootGroup);
+    const rootChildren = provider.getChildren(rootGroup);
+    expect(rootChildren[0].label).to.equal('Package Manager');
+    const rootScripts = rootChildren.filter(
+      (item: { label?: string }) => item.label !== 'Package Manager',
+    );
     expect(rootScripts.map((item: { label?: string }) => item.label)).to.include.members([
       'build',
       'start',
@@ -54,8 +58,35 @@ describe('NpmScriptsProvider', () => {
       (item: { label?: string }) => normalizeLabel(item.label) === 'workspace/nested/pkg',
     );
     expect(nestedGroup).to.exist;
-    const nestedScripts = provider.getChildren(nestedGroup);
+    const nestedChildren = provider.getChildren(nestedGroup);
+    expect(nestedChildren[0].label).to.equal('Package Manager');
+    const nestedScripts = nestedChildren.filter(
+      (item: { label?: string }) => item.label !== 'Package Manager',
+    );
     expect(nestedScripts.map((item: { label?: string }) => item.label)).to.deep.equal(['lint']);
+    provider.dispose();
+  });
+
+  it('includes package manager section with four settings rows', async () => {
+    const vscodeMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],
+      workspaceFiles: [{ fsPath: rootPackageJson }],
+    });
+    const NpmScriptsProvider = loadNpmScriptsProviderModule(vscodeMock, fs);
+    const provider = new NpmScriptsProvider();
+
+    await wait(30);
+    const [group] = provider.getChildren();
+    const [pmGroup] = provider.getChildren(group);
+    expect(pmGroup.label).to.equal('Package Manager');
+
+    const pmChildren = provider.getChildren(pmGroup);
+    expect(pmChildren.map((item: { label?: string }) => item.label)).to.deep.equal([
+      'Manager',
+      'Registry',
+      'Install Dependencies',
+      'View Installed Packages',
+    ]);
     provider.dispose();
   });
 

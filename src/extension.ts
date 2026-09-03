@@ -3,8 +3,14 @@
  */
 import * as vscode from 'vscode';
 import { getInterpreterForLanguage } from './interpreterConfig';
+import { viewInstalledPackages } from './installedPackagesPanel';
 import { LanguageInterpretersProvider } from './languageInterpretersProvider';
 import { NpmScriptsProvider } from './npmScriptsProvider';
+import {
+  installDependencies,
+  selectPackageManager,
+  selectRegistry,
+} from './packageManagerUi';
 import { RunningScriptsProvider } from './runningScriptsProvider';
 import {
   LanguageInterpreterTreeItem,
@@ -29,6 +35,11 @@ function resolveInterpreterItem(
   item: LanguageInterpreterTreeItem,
 ): LanguageInterpreterTreeItem {
   return item;
+}
+
+/** 命令参数可能是 packageJsonPath 字符串或 TreeItem */
+function resolvePackageJsonPath(pathOrItem: string | { packageJsonPath: string }): string {
+  return typeof pathOrItem === 'string' ? pathOrItem : pathOrItem.packageJsonPath;
 }
 
 /** 设置 jsRunner.active 上下文，用于 package.json 中 when 子句控制菜单/视图可见性 */
@@ -70,7 +81,11 @@ export function activate(context: vscode.ExtensionContext): void {
       updateRunContext(editor);
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('jsRunner.interpreters')) {
+      if (
+        event.affectsConfiguration('jsRunner.interpreters') ||
+        event.affectsConfiguration('jsRunner.packageManager') ||
+        event.affectsConfiguration('jsRunner.packageManagerSettings')
+      ) {
         updateRunContext(vscode.window.activeTextEditor);
       }
     }),
@@ -115,6 +130,30 @@ export function activate(context: vscode.ExtensionContext): void {
       (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {
         const script = resolveNpmScript(scriptOrItem);
         void terminalManager.debugNpmScript(script.name, script.packageJsonPath, script.command);
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.selectPackageManager',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        void selectPackageManager(pathOrItem, () => npmScriptsProvider.refresh());
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.selectRegistry',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        void selectRegistry(pathOrItem, () => npmScriptsProvider.refresh());
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.installDependencies',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        void installDependencies(pathOrItem, () => npmScriptsProvider.refresh());
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.viewInstalledPackages',
+      (pathOrItem: string | { packageJsonPath: string }) => {
+        viewInstalledPackages(resolvePackageJsonPath(pathOrItem), context);
       },
     ),
     vscode.commands.registerCommand('jsRunner.addInterpreter', () => {

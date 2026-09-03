@@ -1,6 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import {
+  buildRunScriptCommand,
+  formatScriptLabel,
+  resolvePackageManager,
+} from './packageManager';
 
 export interface NpmScriptDebugInput {
   name: string;
@@ -127,11 +132,12 @@ function buildNodeLaunchConfig(
   dir: string,
   program: string,
   args: string[],
+  pm: string,
 ): vscode.DebugConfiguration {
   return {
     type: 'node',
     request: 'launch',
-    name: `npm: ${name}`,
+    name: formatScriptLabel(pm, name),
     cwd: dir,
     program,
     args,
@@ -143,14 +149,18 @@ function buildNodeLaunchConfig(
   };
 }
 
-function buildNodeTerminalFallback(name: string, dir: string): vscode.DebugConfiguration {
-  const scriptName = name.includes(' ') ? `"${name.replace(/"/g, '\\"')}"` : name;
+function buildNodeTerminalFallback(
+  name: string,
+  dir: string,
+  packageJsonPath: string,
+): vscode.DebugConfiguration {
+  const pm = resolvePackageManager(packageJsonPath);
 
   return {
     type: 'node-terminal',
     request: 'launch',
-    name: `npm: ${name}`,
-    command: `npm run ${scriptName}`,
+    name: formatScriptLabel(pm, name),
+    command: buildRunScriptCommand(pm, name),
     cwd: dir,
     sourceMaps: true,
     resolveSourceMapLocations: ['**', '!**/node_modules/**'],
@@ -161,10 +171,11 @@ function buildNodeTerminalFallback(name: string, dir: string): vscode.DebugConfi
 /** Build a debug launch config that preserves editor breakpoints when possible. */
 export function buildNpmScriptDebugConfig(input: NpmScriptDebugInput): vscode.DebugConfiguration {
   const dir = path.dirname(input.packageJsonPath);
+  const pm = resolvePackageManager(input.packageJsonPath);
   const parts = stripEnvWrappers(splitCommandLine(input.command.trim()));
 
   if (parts.length === 0) {
-    return buildNodeTerminalFallback(input.name, dir);
+    return buildNodeTerminalFallback(input.name, dir, input.packageJsonPath);
   }
 
   const cliBase = getCliBaseName(parts[0]);
@@ -186,7 +197,7 @@ export function buildNpmScriptDebugConfig(input: NpmScriptDebugInput): vscode.De
 
     if (index < parts.length) {
       const program = resolveScriptPath(dir, parts[index]);
-      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(index + 1));
+      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(index + 1), pm);
     }
   }
 
@@ -194,16 +205,16 @@ export function buildNpmScriptDebugConfig(input: NpmScriptDebugInput): vscode.De
   if (packageName) {
     const program = resolvePackageBin(dir, packageName);
     if (program) {
-      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(1));
+      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(1), pm);
     }
   }
 
   if (/\.(js|mjs|cjs|ts|tsx|jsx)$/i.test(parts[0])) {
     const program = resolveScriptPath(dir, parts[0]);
     if (fs.existsSync(program)) {
-      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(1));
+      return buildNodeLaunchConfig(input.name, dir, program, parts.slice(1), pm);
     }
   }
 
-  return buildNodeTerminalFallback(input.name, dir);
+  return buildNodeTerminalFallback(input.name, dir, input.packageJsonPath);
 }
