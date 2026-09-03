@@ -4,6 +4,10 @@
 
 Repository: [https://github.com/li1125435097/js-runner](https://github.com/li1125435097/js-runner)
 
+![Sidebar](resources/sidebar.gif)
+
+![Language interpreters](resources/many-languate.gif)
+
 A VS Code / Cursor extension for running source files and npm scripts in parallel terminals, with sidebar views for npm scripts, package management, active runs, and configurable language interpreters.
 
 ## Features
