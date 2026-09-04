@@ -41,6 +41,19 @@ function getScripts(
   return (provider.getChildren(group) as TreeNode[]).filter((item) => Boolean(item.script));
 }
 
+function createWorkspaceState(initial: Record<string, unknown> = {}) {
+  const store: Record<string, unknown> = { ...initial };
+  return {
+    get<T>(key: string, defaultValue?: T): T | undefined {
+      return key in store ? (store[key] as T) : defaultValue;
+    },
+    async update(key: string, value: unknown): Promise<void> {
+      store[key] = value;
+    },
+    store,
+  };
+}
+
 describe('NpmScriptsProvider', () => {
   afterEach(() => {
     sinon.restore();
@@ -170,6 +183,77 @@ describe('NpmScriptsProvider', () => {
       (item) => normalizeLabel(item.label) === 'workspace/nested/pkg',
     );
     expect(nested?.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Collapsed);
+    provider.dispose();
+  });
+
+  it('persists the filter query and restores it on restart', async () => {
+    const vscodeMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],
+      workspaceFiles: [{ fsPath: rootPackageJson }, { fsPath: nestedPackageJson }],
+    });
+    const { NpmScriptsProvider } = loadNpmScriptsProviderModule(vscodeMock, fs);
+    const workspaceState = createWorkspaceState();
+    const provider = new NpmScriptsProvider(workspaceState);
+
+    await wait(30);
+    provider.setFilter('  nested  ');
+    await wait(0);
+
+    expect(workspaceState.store['jsRunner.npmScriptsFilter']).to.equal('nested');
+    expect(
+      vscodeMock.commands.executeCommand.calledWith('setContext', 'jsRunner.npmScriptsFiltered', true),
+    ).to.be.true;
+    provider.dispose();
+
+    const restartedMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],
+      workspaceFiles: [{ fsPath: rootPackageJson }, { fsPath: nestedPackageJson }],
+    });
+    const { NpmScriptsProvider: RestartedProvider } = loadNpmScriptsProviderModule(
+      restartedMock,
+      fs,
+    );
+    const restarted = new RestartedProvider(workspaceState);
+    await wait(30);
+
+    const search = (restarted.getChildren() as TreeNode[])[0];
+    expect(search.label).to.equal('nested');
+    const groups = getPackageGroups(restarted);
+    expect(groups).to.have.length(1);
+    expect(normalizeLabel(groups[0].label)).to.equal('workspace/nested/pkg');
+    expect(
+      restartedMock.commands.executeCommand.calledWith(
+        'setContext',
+        'jsRunner.npmScriptsFiltered',
+        true,
+      ),
+    ).to.be.true;
+    restarted.dispose();
+  });
+
+  it('persists an empty filter after clearing search', async () => {
+    const vscodeMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],
+      workspaceFiles: [{ fsPath: rootPackageJson }, { fsPath: nestedPackageJson }],
+    });
+    const { NpmScriptsProvider } = loadNpmScriptsProviderModule(vscodeMock, fs);
+    const workspaceState = createWorkspaceState({
+      'jsRunner.npmScriptsFilter': 'nested',
+    });
+    const provider = new NpmScriptsProvider(workspaceState);
+
+    await wait(30);
+    provider.setFilter('');
+    await wait(0);
+
+    expect(workspaceState.store['jsRunner.npmScriptsFilter']).to.equal('');
+    expect(
+      vscodeMock.commands.executeCommand.calledWith(
+        'setContext',
+        'jsRunner.npmScriptsFiltered',
+        false,
+      ),
+    ).to.be.true;
     provider.dispose();
   });
 

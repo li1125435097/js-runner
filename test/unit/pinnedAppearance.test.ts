@@ -28,6 +28,20 @@ describe('pinnedAppearance', () => {
     expect(appearance.getPinnedForeground()).to.equal('#aabbcc');
   });
 
+  it('bakes the pin color into a data-URI package icon', () => {
+    const vscodeMock = createVscodeMock({
+      configuration: { 'jsRunner.pinnedForeground': '#ff00aa' },
+    });
+    const appearance = loadPinnedAppearanceModule(vscodeMock) as {
+      pinnedPackageIconUri: () => { scheme: string; toString: () => string };
+    };
+
+    const icon = appearance.pinnedPackageIconUri();
+    expect(icon.scheme).to.equal('data');
+    expect(icon.toString()).to.include('image/svg+xml');
+    expect(icon.toString()).to.include(encodeURIComponent('#ff00aa'));
+  });
+
   it('decorates pinned URIs with the pin theme color', () => {
     const vscodeMock = createVscodeMock();
     const appearance = loadPinnedAppearanceModule(vscodeMock) as {
@@ -74,5 +88,47 @@ describe('pinnedAppearance', () => {
     await appearance.syncPinnedForegroundColorCustomization();
 
     expect(vscodeMock.__configurationStore.has('workbench.colorCustomizations')).to.equal(false);
+  });
+
+  it('temporarily matches list selection foreground to the pin color', async () => {
+    const vscodeMock = createVscodeMock();
+    const appearance = loadPinnedAppearanceModule(vscodeMock) as {
+      DEFAULT_PINNED_FOREGROUND: string;
+      setPinnedListSelectionForeground: (enabled: boolean) => Promise<void>;
+    };
+
+    await appearance.setPinnedListSelectionForeground(true);
+    expect(vscodeMock.__configurationStore.get('workbench.colorCustomizations')).to.deep.equal({
+      'list.activeSelectionForeground': appearance.DEFAULT_PINNED_FOREGROUND,
+    });
+
+    await appearance.setPinnedListSelectionForeground(false);
+    expect(vscodeMock.__configurationStore.get('workbench.colorCustomizations')).to.equal(undefined);
+  });
+
+  it('restores a previous list selection foreground after unpinning the override', async () => {
+    const vscodeMock = createVscodeMock({
+      configuration: {
+        'workbench.colorCustomizations': {
+          'list.activeSelectionForeground': '#ffffff',
+          'editor.background': '#000000',
+        },
+      },
+    });
+    const appearance = loadPinnedAppearanceModule(vscodeMock) as {
+      setPinnedListSelectionForeground: (enabled: boolean) => Promise<void>;
+    };
+
+    await appearance.setPinnedListSelectionForeground(true);
+    expect(vscodeMock.__configurationStore.get('workbench.colorCustomizations')).to.deep.equal({
+      'list.activeSelectionForeground': '#46ee37',
+      'editor.background': '#000000',
+    });
+
+    await appearance.setPinnedListSelectionForeground(false);
+    expect(vscodeMock.__configurationStore.get('workbench.colorCustomizations')).to.deep.equal({
+      'list.activeSelectionForeground': '#ffffff',
+      'editor.background': '#000000',
+    });
   });
 });

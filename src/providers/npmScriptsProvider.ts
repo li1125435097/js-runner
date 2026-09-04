@@ -47,6 +47,7 @@ const LOCKFILE_PATTERNS = [
 const SCAN_DEBOUNCE_MS = 300;
 const PINNED_SCRIPTS_KEY = 'jsRunner.pinnedScripts';
 const PINNED_PACKAGES_KEY = 'jsRunner.pinnedPackages';
+const FILTER_QUERY_KEY = 'jsRunner.npmScriptsFilter';
 
 export function isInsideNodeModules(fsPath: string): boolean {
   return fsPath.split(path.sep).includes('node_modules');
@@ -153,6 +154,8 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     this.workspaceState = workspaceState;
     this.pinnedKeys = [...(workspaceState?.get<string[]>(PINNED_SCRIPTS_KEY, []) ?? [])];
     this.pinnedPackageKeys = [...(workspaceState?.get<string[]>(PINNED_PACKAGES_KEY, []) ?? [])];
+    this.filterQuery = (workspaceState?.get<string>(FILTER_QUERY_KEY, '') ?? '').trim();
+    this.syncFilterContext();
     void this.scanScripts();
 
     this.subscribeWatcher(
@@ -216,11 +219,8 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   setFilter(query: string): void {
     this.filterQuery = query.trim();
-    void vscode.commands.executeCommand(
-      'setContext',
-      'jsRunner.npmScriptsFiltered',
-      this.isFilterActive(),
-    );
+    void this.workspaceState?.update(FILTER_QUERY_KEY, this.filterQuery);
+    this.syncFilterContext();
     this.groupItems.clear();
     this._onDidChangeTreeData.fire(undefined);
   }
@@ -449,6 +449,14 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   private isFilterActive(): boolean {
     return this.filterQuery.length > 0;
+  }
+
+  private syncFilterContext(): void {
+    void vscode.commands.executeCommand(
+      'setContext',
+      'jsRunner.npmScriptsFiltered',
+      this.isFilterActive(),
+    );
   }
 
   private isGroupExpanded(packageJsonPath: string): boolean {

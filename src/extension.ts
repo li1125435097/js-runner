@@ -14,11 +14,13 @@ import {
 import { RunningScriptsProvider } from './providers/runningScriptsProvider';
 import {
   PinnedDecorationProvider,
+  setPinnedListSelectionForeground,
   syncPinnedForegroundColorCustomization,
 } from './common/pinnedAppearance';
 import {
   LanguageInterpreterTreeItem,
   NpmScriptInfo,
+  PackageGroupItem,
   RunningScriptTreeItem,
   ScriptTreeItem,
 } from './common/types';
@@ -51,6 +53,16 @@ function markExtensionActive(): void {
   void vscode.commands.executeCommand('setContext', 'jsRunner.active', true);
 }
 
+function isPinnedPackageSelected(view: vscode.TreeView<unknown>): boolean {
+  return view.selection.some(
+    (item) => item instanceof PackageGroupItem && item.contextValue === 'packageGroupPinned',
+  );
+}
+
+function syncPinnedPackageLabelColor(view: vscode.TreeView<unknown>): void {
+  void setPinnedListSelectionForeground(view.visible && isPinnedPackageSelected(view));
+}
+
 /** 根据当前编辑器语言是否已配置解释器，更新运行按钮可见性 */
 function updateRunContext(editor: vscode.TextEditor | undefined): void {
   const canRun = editor ? Boolean(getInterpreterForLanguage(editor.document.languageId)) : false;
@@ -80,11 +92,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   npmScriptsProvider.refresh();
   void syncPinnedForegroundColorCustomization();
+  const decorationProvider = new PinnedDecorationProvider();
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       markExtensionActive();
       updateRunContext(editor);
+      void setPinnedListSelectionForeground(false);
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (
@@ -96,9 +110,16 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       if (event.affectsConfiguration('jsRunner.pinnedForeground')) {
         void syncPinnedForegroundColorCustomization();
+        syncPinnedPackageLabelColor(npmScriptsView);
       }
     }),
-    vscode.window.registerFileDecorationProvider(new PinnedDecorationProvider()),
+    vscode.window.registerFileDecorationProvider(decorationProvider),
+    npmScriptsView.onDidChangeSelection(() => syncPinnedPackageLabelColor(npmScriptsView)),
+    npmScriptsView.onDidChangeVisibility(() => syncPinnedPackageLabelColor(npmScriptsView)),
+    npmScriptsView.onDidExpandElement(() => syncPinnedPackageLabelColor(npmScriptsView)),
+    npmScriptsView.onDidCollapseElement(() => syncPinnedPackageLabelColor(npmScriptsView)),
+    runningScriptsView.onDidChangeSelection(() => void setPinnedListSelectionForeground(false)),
+    languageInterpretersView.onDidChangeSelection(() => void setPinnedListSelectionForeground(false)),
     terminalManager,
     npmScriptsProvider,
     runningScriptsProvider,
@@ -149,13 +170,17 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       'jsRunner.pinNpmPackage',
       (pathOrItem: string | { packageJsonPath: string }) => {
-        void npmScriptsProvider.pinNpmPackage(resolvePackageJsonPath(pathOrItem));
+        void npmScriptsProvider.pinNpmPackage(resolvePackageJsonPath(pathOrItem)).then(() => {
+          syncPinnedPackageLabelColor(npmScriptsView);
+        });
       },
     ),
     vscode.commands.registerCommand(
       'jsRunner.unpinNpmPackage',
       (pathOrItem: string | { packageJsonPath: string }) => {
-        void npmScriptsProvider.unpinNpmPackage(resolvePackageJsonPath(pathOrItem));
+        void npmScriptsProvider.unpinNpmPackage(resolvePackageJsonPath(pathOrItem)).then(() => {
+          syncPinnedPackageLabelColor(npmScriptsView);
+        });
       },
     ),
     vscode.commands.registerCommand(
@@ -215,6 +240,7 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
+  void setPinnedListSelectionForeground(false);
   void vscode.commands.executeCommand('setContext', 'jsRunner.active', false);
   void vscode.commands.executeCommand('setContext', 'jsRunner.canRunCurrentFile', false);
 }

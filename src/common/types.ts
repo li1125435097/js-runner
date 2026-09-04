@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getManagerDisplayLabel, KnownPackageManager } from './packageManagerCommands';
 import {
   pinnedForegroundThemeColor,
+  pinnedPackageIconUri,
   pinnedPackageUri,
   pinnedScriptUri,
 } from './pinnedAppearance';
@@ -76,10 +77,9 @@ export class PackageGroupItem extends vscode.TreeItem {
     );
     this.id = `package-group:${group.packageJsonPath}`;
     this.contextValue = pinned ? 'packageGroupPinned' : 'packageGroup';
-    this.iconPath = new vscode.ThemeIcon(
-      'package',
-      pinned ? pinnedForegroundThemeColor() : undefined,
-    );
+    this.iconPath = pinned
+      ? pinnedPackageIconUri()
+      : new vscode.ThemeIcon('package');
     if (pinned) {
       this.resourceUri = pinnedPackageUri(group.packageJsonPath);
     }

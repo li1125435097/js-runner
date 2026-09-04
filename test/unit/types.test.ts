@@ -18,7 +18,7 @@ function loadTypes(vscodeMock: ReturnType<typeof createVscodeMock>) {
       tooltip?: string;
       collapsibleState?: number;
       id?: string;
-      iconPath?: { id: string; color?: { id: string } };
+      iconPath?: { id?: string; color?: { id: string }; scheme?: string };
       resourceUri?: { scheme: string; toString: () => string };
     };
     ScriptSearchItem: new (query: string) => {
@@ -75,6 +75,8 @@ describe('types tree items', () => {
     expect(item.tooltip).to.equal('/workspace/package.json');
     expect(item.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Collapsed);
     expect(item.id).to.equal('package-group:/workspace/package.json');
+    expect(item.iconPath?.id).to.equal('package');
+    expect(item.iconPath?.color).to.equal(undefined);
 
     const expanded = new PackageGroupItem(
       {
@@ -96,7 +98,8 @@ describe('types tree items', () => {
       true,
     );
     expect(pinned.contextValue).to.equal('packageGroupPinned');
-    expect(pinned.iconPath?.color?.id).to.equal('jsRunner.pinnedForeground');
+    expect(pinned.iconPath?.scheme).to.equal('data');
+    expect(String(pinned.iconPath)).to.include(encodeURIComponent('#46ee37'));
     expect(pinned.resourceUri?.scheme).to.equal('js-runner-pin');
   });
 
