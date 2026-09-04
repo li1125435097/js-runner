@@ -1,12 +1,13 @@
 # JS Runner Kit
 
+![Sidebar](resources/sidebar.gif)
+
+![Language interpreters](resources/many-languate.gif)
+
 **English** | [中文](#中文)
 
 Repository: [https://github.com/li1125435097/js-runner](https://github.com/li1125435097/js-runner)
 
-![Sidebar](resources/sidebar.gif)
-
-![Language interpreters](resources/many-languate.gif)
 
 A VS Code / Cursor extension for running source files and npm scripts in parallel terminals, with sidebar views for npm scripts, package management, active runs, and configurable language interpreters.
 
@@ -97,14 +98,14 @@ Click the **pin** icon on a package group or script. Pinned items:
 
 - Move to the top of their list (packages among packages, scripts among scripts)
 - Keep pin order (most recently pinned first)
-- Use the highlight color from `jsRunner.pinnedForeground` (default `#E75480`)
+- Use the highlight color from `jsRunner.pinnedForeground` (default `#46ee37`)
 - Persist in workspace state across reloads
 
 Unpin with the filled pin icon. Change the color in user or workspace settings:
 
 ```json
 {
-  "jsRunner.pinnedForeground": "#E75480"
+  "jsRunner.pinnedForeground": "#46ee37"
 }
 ```
 
@@ -316,7 +317,7 @@ Language extensions can register their own IDs (for example `vue`, `svelte`). Us
 | `jsRunner.interpreters` | see defaults above | Language → interpreter mapping |
 | `jsRunner.packageManager` | `auto` | Global default manager when a package's own setting is `auto` |
 | `jsRunner.packageManagerSettings` | `{}` | Per-package `{ manager, registry }` overrides (workspace) |
-| `jsRunner.pinnedForeground` | `#E75480` | Highlight color for pinned packages and scripts |
+| `jsRunner.pinnedForeground` | `#46ee37` | Highlight color for pinned packages and scripts |
 
 ## Keybinding note
 
@@ -440,14 +441,14 @@ npm run install:plugin
 
 - 移动到对应列表顶部（包与包之间、脚本与脚本之间分别置顶）
 - 按置顶顺序排列（最近置顶的在前）
-- 使用 `jsRunner.pinnedForeground` 高亮（默认 `#E75480`）
+- 使用 `jsRunner.pinnedForeground` 高亮（默认 `#46ee37`）
 - 保存在工作区状态中，重载后仍有效
 
 再次点击实心 pin 图标即可取消置顶。可在用户或工作区设置中改颜色：
 
 ```json
 {
-  "jsRunner.pinnedForeground": "#E75480"
+  "jsRunner.pinnedForeground": "#46ee37"
 }
 ```
 
@@ -659,7 +660,7 @@ Windows 上若 `bash` 不在 `PATH` 中，可使用完整路径：
 | `jsRunner.interpreters` | 见上方默认表 | 语言 → 解释器映射 |
 | `jsRunner.packageManager` | `auto` | 包自身设置为 `auto` 时的全局默认 manager |
 | `jsRunner.packageManagerSettings` | `{}` | 按包覆盖 `{ manager, registry }`（工作区） |
-| `jsRunner.pinnedForeground` | `#E75480` | 置顶包与脚本的高亮颜色 |
+| `jsRunner.pinnedForeground` | `#46ee37` | 置顶包与脚本的高亮颜色 |
 
 ## 快捷键说明
 

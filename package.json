@@ -291,9 +291,9 @@
         "id": "jsRunner.pinnedForeground",
         "description": "Foreground color for pinned packages and scripts in the NPM Scripts view.",
         "defaults": {
-          "dark": "#E75480",
-          "light": "#E75480",
-          "highContrast": "#E75480"
+          "dark": "#46ee37",
+          "light": "#46ee37",
+          "highContrast": "#46ee37"
         }
       }
     ],
@@ -302,7 +302,7 @@
       "properties": {
         "jsRunner.pinnedForeground": {
           "type": "string",
-          "default": "#E75480",
+          "default": "#46ee37",
           "format": "color",
           "description": "Foreground color for pinned packages and scripts in the NPM Scripts view. Change this in user settings."
         },

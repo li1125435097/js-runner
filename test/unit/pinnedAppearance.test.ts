@@ -11,10 +11,10 @@ describe('pinnedAppearance', () => {
     };
 
     expect(appearance.getPinnedForeground()).to.equal(appearance.DEFAULT_PINNED_FOREGROUND);
-    expect(appearance.DEFAULT_PINNED_FOREGROUND).to.equal('#E75480');
+    expect(appearance.DEFAULT_PINNED_FOREGROUND).to.equal('#46ee37');
 
     vscodeMock.__configurationStore.set('jsRunner.pinnedForeground', 'not-a-color');
-    expect(appearance.getPinnedForeground()).to.equal('#E75480');
+    expect(appearance.getPinnedForeground()).to.equal('#46ee37');
   });
 
   it('reads pin color from configuration', () => {
