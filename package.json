@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
@@ -407,15 +407,15 @@
     "compile:test": "npm run compile && tsc -p test/tsconfig.json",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "package": "vsce package",
-    "install:plugin": "cursor --install-extension js-runner-kit-0.0.5.vsix",
+    "package": "vsce package -o release",
+    "install:plugin": "node -e \"const p=require('./package.json');const v=p.version;const n=p.name;const f=`release/${n}-${v}.vsix`;const {execSync}=require('child_process');console.log('Installing:',f);execSync(`cursor --install-extension \\\"${f}\\\"`,{stdio:'inherit'});\"",
     "test:unit": "npm run compile:test && node dist/test/runUnitTests.js",
     "test:integration": "npm run compile:test && node dist/test/runIntegrationTests.js",
     "test": "npm run test:unit && npm run test:integration",
     "publish": "vsce publish",
-    "publish:patch": "vsce publish patch",
-    "publish:minor": "vsce publish minor",
-    "publish:major": "vsce publish major"
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major"
   },
   "devDependencies": {
     "@types/chai": "^4.3.20",
