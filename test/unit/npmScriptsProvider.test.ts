@@ -124,7 +124,7 @@ describe('NpmScriptsProvider', () => {
     const [group] = getPackageGroups(provider);
     const [pmGroup] = provider.getChildren(group) as TreeNode[];
     expect(pmGroup.label).to.equal('Package Manager');
-    expect(pmGroup.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Expanded);
+    expect(pmGroup.collapsibleState).to.equal(vscodeMock.TreeItemCollapsibleState.Collapsed);
 
     const pmChildren = provider.getChildren(pmGroup) as TreeNode[];
     expect(pmChildren.map((item) => item.label)).to.deep.equal([

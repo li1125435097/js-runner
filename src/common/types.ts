@@ -91,10 +91,10 @@ export class PackageGroupItem extends vscode.TreeItem {
   }
 }
 
-/** Package Manager 折叠区：随父包展开，scripts 保持可见 */
+/** Package Manager 折叠区：默认折叠，scripts 保持可见 */
 export class PackageManagerGroupItem extends vscode.TreeItem {
   constructor(public readonly group: PackageGroup) {
-    super('Package Manager', vscode.TreeItemCollapsibleState.Expanded);
+    super('Package Manager', vscode.TreeItemCollapsibleState.Collapsed);
     this.id = `package-manager:${group.packageJsonPath}`;
     this.contextValue = 'packageManagerGroup';
     this.iconPath = new vscode.ThemeIcon('settings-gear');
