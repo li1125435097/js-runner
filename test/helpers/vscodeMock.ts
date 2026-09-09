@@ -117,9 +117,12 @@ export interface VscodeMock {
     showErrorMessage: sinon.SinonStub;
     createWebviewPanel: sinon.SinonStub;
     registerFileDecorationProvider: sinon.SinonStub;
+    showQuickPick: sinon.SinonStub;
+    withProgress: sinon.SinonStub;
     __createdTerminals: MockTerminal[];
     __closeTerminal: (terminal: MockTerminal) => void;
   };
+  ProgressLocation: { SourceControl: number; Window: number; Notification: number };
   commands: {
     executeCommand: sinon.SinonStub;
     registerCommand: sinon.SinonStub;
@@ -245,15 +248,19 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         return response;
       }),
       showErrorMessage: sinon.stub().resolves(undefined),
-        createWebviewPanel: sinon.stub().callsFake(() => ({
-          webview: {
-            html: '',
-            onDidReceiveMessage: sinon.stub().returns({ dispose: sinon.stub() }),
-          },
-          reveal: sinon.stub(),
-          onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
-        })),
-        registerFileDecorationProvider: sinon.stub().returns({ dispose: sinon.stub() }),
+      createWebviewPanel: sinon.stub().callsFake(() => ({
+        webview: {
+          html: '',
+          onDidReceiveMessage: sinon.stub().returns({ dispose: sinon.stub() }),
+        },
+        reveal: sinon.stub(),
+        onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+      })),
+      registerFileDecorationProvider: sinon.stub().returns({ dispose: sinon.stub() }),
+      showQuickPick: sinon.stub().resolves(undefined),
+      withProgress: sinon.stub().callsFake(async (_options: unknown, task: (progress: { report: () => void }) => unknown) => {
+        return task({ report: () => undefined });
+      }),
       __createdTerminals: createdTerminals,
       __closeTerminal: (terminal: MockTerminal) => {
         for (const listener of closeTerminalListeners) {
@@ -267,6 +274,11 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     },
     debug: {
       startDebugging: sinon.stub().resolves(true),
+    },
+    ProgressLocation: {
+      SourceControl: 1,
+      Window: 10,
+      Notification: 15,
     },
     __configurationStore: configurationStore,
   };

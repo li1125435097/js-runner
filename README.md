@@ -20,7 +20,7 @@ A VS Code / Cursor extension for running source files and npm scripts in paralle
 - **Pin packages and scripts** — Pin frequently used packages or scripts to the top; pinned rows use a customizable highlight color
 - **Package manager** — Per-package manager (`auto` / npm / yarn / pnpm / bun / custom) and registry (official, mirrors, or a custom URL)
 - **Install dependencies** — One-click install in a dedicated terminal; optionally wipe existing `node_modules` first
-- **View installed packages** — Webview table of declared vs installed versions; click a package name to reveal it in the Explorer
+- **View installed packages** — Webview table of declared vs installed versions; switch among locally cached versions from a dropdown, or add another version from the registry without changing `package.json`
 - **Debug NPM scripts** — Inline debug button on Node/JS-related scripts (vite, tsx, node, etc.); launches the VS Code JavaScript Debugger with breakpoints when possible
 - **Running Scripts sidebar** — Lists active terminals; click to focus or stop individual runs
 - **Language Interpreters sidebar** — Lists supported languages and interpreter paths; add, edit, or remove entries
@@ -53,7 +53,7 @@ Each package group contains scripts plus a **Package Manager** section:
 | **Manager** | CLI used to run scripts and install (`auto` shows the detected manager) |
 | **Registry** | Registry used for install (`auto` reads `.npmrc`, otherwise a preset or custom URL) |
 | **Install Dependencies** | Run `{manager} install` in a new terminal |
-| **View Installed Packages** | Open a webview of declared vs installed dependencies |
+| **View Installed Packages** | Open a webview of declared vs installed dependencies, with local version switching |
 
 ## Commands
 
@@ -73,7 +73,7 @@ Each package group contains scripts plus a **Package Manager** section:
 | Select Package Manager | — | Choose the CLI used to run/install for a package |
 | Select Registry | — | Choose the npm registry for install |
 | Install Dependencies | — | Install dependencies for a package |
-| View Installed Packages | — | Open declared vs installed packages |
+| View Installed Packages | — | Open declared vs installed packages and switch cached versions |
 | Add Language Interpreter | — | Add a language + interpreter in the sidebar (+ button) |
 | Edit Language Interpreter | — | Edit label or path for an existing entry |
 | Remove Language Interpreter | — | Remove an interpreter entry |
@@ -170,6 +170,19 @@ Choosing a preset or custom URL writes `registry=` into that package's `.npmrc`.
 - Declared vs installed versions for production, development, peer, and optional dependencies
 - A type filter (All / Production / Development / Peer / Optional)
 - Click a package name to reveal `node_modules/<name>` in the Explorer (when installed)
+- An **Installed** dropdown per dependency to switch the version Node resolves, or **Add version...** to cache another release from the configured registry
+
+#### Switch versions
+
+The dropdown lists versions already cached under `<packageDir>/.js-runner/packages/<name>/<version>/`. Opening the panel seeds the currently installed copy into that cache. Choosing a version retargets only the top-level `node_modules/<name>` entry (a junction on Windows, a directory symlink elsewhere). It does **not** edit `package.json` or the lockfile.
+
+**Add version...** fetches the package metadata from the selected registry, lets you pick a version in QuickPick, then runs `npm install <name>@<ver> --prefix <cacheDir> --no-package-lock --ignore-scripts`. The new version appears in the dropdown; it is not switched automatically.
+
+This overlay works with npm, Yarn (classic / Berry `nodeLinker: node-modules`), pnpm, and bun when the project has a real `node_modules` layout. Notes:
+
+- Yarn Berry **PnP** (`.pnp.cjs` / `.pnp.js` without a usable `node_modules/<name>` entry) cannot be switched; the Installed column stays plain text
+- pnpm: only the project's **direct** dependency entry is replaced; the `.pnpm` store is never modified. Other packages that resolve through `.pnpm` may still see the lockfile version
+- `{manager} install` (including **Install Dependencies**) may restore `node_modules` from the lockfile. Cached copies remain under `.js-runner/`, so you can switch again from the dropdown
 
 ## NPM Script Debugging
 
@@ -363,7 +376,7 @@ MIT
 - **置顶包与脚本** — 将常用包或脚本固定到列表顶部，置顶项使用可自定义的高亮颜色
 - **包管理器** — 按包选择 manager（`auto` / npm / yarn / pnpm / bun / 自定义）和 registry（官方、镜像或自定义 URL）
 - **安装依赖** — 一键在独立终端中安装；可选先删除已有 `node_modules`
-- **查看已安装包** — Webview 对照声明版本与已安装版本；点击包名可在资源管理器中定位
+- **查看已安装包** — Webview 对照声明版本与已安装版本；可用下拉切换本地缓存的多版本，或从 registry 再缓存一版，且不改 `package.json`
 - **调试 NPM 脚本** — 对 Node/JS 相关脚本（vite、tsx、node 等）显示行内调试按钮；尽可能以 VS Code JavaScript Debugger 启动并保留断点
 - **Running Scripts 侧边栏** — 列出活跃终端；点击聚焦或停止单个运行
 - **Language Interpreters 侧边栏** — 列出语言与解释器路径；可添加、编辑或删除
@@ -396,7 +409,7 @@ npm run install:plugin
 | **Manager** | 用于运行脚本和安装依赖的 CLI（`auto` 会显示检测到的 manager） |
 | **Registry** | 安装使用的源（`auto` 读取 `.npmrc`，否则为预设或自定义 URL） |
 | **Install Dependencies** | 在新终端中执行 `{manager} install` |
-| **View Installed Packages** | 打开已声明 vs 已安装依赖的 webview |
+| **View Installed Packages** | 打开已声明 vs 已安装依赖的 webview，并可切换本地缓存版本 |
 
 ## 命令
 
@@ -416,7 +429,7 @@ npm run install:plugin
 | Select Package Manager | — | 为某个包选择运行/安装用的 CLI |
 | Select Registry | — | 选择安装用的 npm registry |
 | Install Dependencies | — | 为某个包安装依赖 |
-| View Installed Packages | — | 查看已声明 vs 已安装的包 |
+| View Installed Packages | — | 查看已声明 vs 已安装的包，并切换缓存版本 |
 | Add Language Interpreter | — | 在侧边栏添加语言与解释器（+ 按钮） |
 | Edit Language Interpreter | — | 编辑已有条目的 label 或 path |
 | Remove Language Interpreter | — | 删除解释器条目 |
@@ -513,6 +526,19 @@ npm run install:plugin
 - production / development / peer / optional 依赖的声明版本与已安装版本
 - 类型过滤（All / Production / Development / Peer / Optional）
 - 点击包名可在资源管理器中定位 `node_modules/<name>`（已安装时）
+- 每个依赖的 **Installed** 下拉：切换 Node 当前解析到的版本，或选 **Add version...** 从当前 registry 再缓存一版
+
+#### 切换版本
+
+下拉只列出已缓存在 `<packageDir>/.js-runner/packages/<name>/<version>/` 中的版本。打开面板时会把当前已安装副本写入该缓存。选择某版本只会替换顶层 `node_modules/<name>` 入口（Windows 用 junction，其它平台用目录 symlink），**不会**改 `package.json` 或 lockfile。
+
+**Add version...** 会按所选 registry 拉取包的版本列表，用 QuickPick 选择后再执行 `npm install <name>@<ver> --prefix <cacheDir> --no-package-lock --ignore-scripts`。新版本会出现在下拉中，不会自动切换。
+
+在项目使用真实 `node_modules` 布局时，可与 npm、Yarn（classic / Berry `nodeLinker: node-modules`）、pnpm、bun 一起使用。注意：
+
+- Yarn Berry **PnP**（存在 `.pnp.cjs` / `.pnp.js` 且没有可用的 `node_modules/<name>`）无法切换，Installed 列保持纯文本
+- pnpm：只替换项目**直接依赖**的顶层入口，不会写入 `.pnpm` store。其它包经 `.pnpm` 解析时仍可能是 lockfile 里的版本
+- `{manager} install`（包括 **Install Dependencies**）可能按 lockfile 还原 `node_modules`。缓存仍留在 `.js-runner/`，可再从下拉切回去
 
 ## NPM 脚本调试
 

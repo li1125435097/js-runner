@@ -8,6 +8,15 @@ import {
 import { getPackageManagerSettings } from './packageManagerConfig';
 import { resolveRegistryUrl } from './registryConfig';
 import { getRegistryDisplayLabel } from '../common/registryPresets';
+import {
+  ADD_VERSION_VALUE,
+  canSwitchInstalledPackage,
+  installPackageVersionToCache,
+  listCachedVersions,
+  seedCurrentInstalledVersion,
+  switchInstalledVersion,
+} from './packageVersionCache';
+import { fetchRegistryPackageVersions, RegistryPackageVersions } from './registryClient';
 
 export type DependencyType = 'prod' | 'dev' | 'peer' | 'optional';
 
@@ -17,6 +26,8 @@ export interface InstalledPackageRow {
   declared: string;
   installed: string;
   modulePath?: string;
+  cachedVersions: string[];
+  canSwitch: boolean;
 }
 
 export interface InstalledPackagesSummary {
@@ -61,12 +72,23 @@ function addDependencyRows(
 
   for (const [name, declared] of Object.entries(deps)) {
     const modulePath = path.join(packageDir, 'node_modules', name);
+    const canSwitch = canSwitchInstalledPackage(packageDir, name);
+    if (canSwitch) {
+      try {
+        seedCurrentInstalledVersion(packageDir, name);
+      } catch {
+        // keep listing even if the current copy cannot be cached
+      }
+    }
+
     rows.push({
       name,
       type,
       declared,
       installed: readInstalledVersion(packageDir, name),
       modulePath: fs.existsSync(modulePath) ? modulePath : undefined,
+      cachedVersions: canSwitch ? listCachedVersions(packageDir, name) : [],
+      canSwitch,
     });
   }
 }
@@ -120,6 +142,36 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function renderInstalledCell(row: InstalledPackageRow): string {
+  if (!row.canSwitch) {
+    return `<td>${escapeHtml(row.installed)}</td>`;
+  }
+
+  const options: string[] = [];
+  const seen = new Set<string>();
+  if (row.installed === '—' && !row.cachedVersions.includes(row.installed)) {
+    options.push('<option value="" selected disabled>—</option>');
+  }
+
+  const versions = row.installed !== '—' && !row.cachedVersions.includes(row.installed)
+    ? [row.installed, ...row.cachedVersions]
+    : row.cachedVersions;
+
+  for (const version of versions) {
+    if (seen.has(version)) {
+      continue;
+    }
+    seen.add(version);
+    const selected = version === row.installed ? ' selected' : '';
+    options.push(
+      `<option value="${escapeHtml(version)}"${selected}>${escapeHtml(version)}</option>`,
+    );
+  }
+
+  options.push(`<option value="${ADD_VERSION_VALUE}">Add version...</option>`);
+  return `<td><select class="version-select" data-name="${escapeHtml(row.name)}" data-current="${escapeHtml(row.installed)}">${options.join('')}</select></td>`;
+}
+
 function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 'all'): string {
   const filteredRows =
     filter === 'all' ? summary.rows : summary.rows.filter((row) => row.type === filter);
@@ -130,7 +182,7 @@ function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 
         <td><button class="pkg-link" data-path="${escapeHtml(row.modulePath ?? '')}">${escapeHtml(row.name)}</button></td>
         <td>${escapeHtml(TYPE_LABELS[row.type])}</td>
         <td>${escapeHtml(row.declared)}</td>
-        <td>${escapeHtml(row.installed)}</td>
+        ${renderInstalledCell(row)}
       </tr>`,
     )
     .join('');
@@ -171,6 +223,7 @@ function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 
     h1 { font-size: 1.2rem; margin: 0 0 8px; }
     .meta { color: var(--vscode-descriptionForeground); margin-bottom: 16px; line-height: 1.5; }
     .toolbar { margin-bottom: 12px; display: flex; gap: 12px; align-items: center; }
+    .hint { color: var(--vscode-descriptionForeground); margin: 0 0 12px; line-height: 1.4; font-size: 0.9rem; }
     select {
       font-family: inherit;
       font-size: inherit;
@@ -218,18 +271,20 @@ function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 
       <select id="typeFilter">${filterOptions}</select>
     </label>
   </div>
+  <p class="hint">Switching versions only updates node_modules. package.json is left unchanged. Install Dependencies (npm, yarn, pnpm, or bun) may restore the lockfile version.</p>
   ${
     filteredRows.length === 0
       ? '<div class="empty">No dependencies found.</div>'
       : `<table>
           <thead>
-            <tr><th>Name</th><th>Type</th><th>Declared</th><th>Installed</th></tr>
+            <tr><th>Name</th><th>Type</th><th>Declared</th><th>Installed(Currently used version)</th></tr>
           </thead>
           <tbody>${rowsHtml}</tbody>
         </table>`
   }
   <script>
     const vscode = acquireVsCodeApi();
+    const addVersionValue = ${JSON.stringify(ADD_VERSION_VALUE)};
     document.getElementById('typeFilter').addEventListener('change', (event) => {
       vscode.postMessage({ type: 'filter', value: event.target.value });
     });
@@ -241,9 +296,119 @@ function renderHtml(summary: InstalledPackagesSummary, filter: DependencyType | 
         }
       });
     });
+    document.querySelectorAll('.version-select').forEach((select) => {
+      select.addEventListener('change', (event) => {
+        const target = event.target;
+        const name = target.getAttribute('data-name');
+        const value = target.value;
+        if (!name) {
+          return;
+        }
+        if (value === addVersionValue) {
+          target.value = target.getAttribute('data-current') || '';
+          vscode.postMessage({ type: 'addVersion', name });
+          return;
+        }
+        vscode.postMessage({ type: 'switchVersion', name, version: value });
+      });
+    });
   </script>
 </body>
 </html>`;
+}
+
+function findRow(
+  summary: InstalledPackagesSummary,
+  name: string,
+): InstalledPackageRow | undefined {
+  return summary.rows.find((row) => row.name === name);
+}
+
+function buildVersionQuickPickItems(
+  metadata: RegistryPackageVersions,
+): Array<vscode.QuickPickItem & { version: string }> {
+  const items: Array<vscode.QuickPickItem & { version: string }> = [];
+  const seen = new Set<string>();
+
+  for (const [tag, version] of Object.entries(metadata.distTags)) {
+    if (typeof version !== 'string' || seen.has(version)) {
+      continue;
+    }
+    seen.add(version);
+    items.push({ label: version, description: tag, version });
+  }
+
+  for (const version of metadata.versions) {
+    if (seen.has(version)) {
+      continue;
+    }
+    seen.add(version);
+    items.push({ label: version, version });
+  }
+
+  return items;
+}
+
+async function handleSwitchVersion(packageJsonPath: string, name: string, version: string): Promise<void> {
+  const summary = buildInstalledPackagesSummary(packageJsonPath);
+  const row = findRow(summary, name);
+  if (!row?.canSwitch) {
+    return;
+  }
+
+  if (version === ADD_VERSION_VALUE) {
+    return;
+  }
+
+  if (!row.cachedVersions.includes(version) && row.installed !== version) {
+    await vscode.window.showErrorMessage(`JS Runner: ${name}@${version} is not in the local version cache.`);
+    return;
+  }
+
+  const packageDir = path.dirname(packageJsonPath);
+  switchInstalledVersion(packageDir, name, version);
+}
+
+async function handleAddVersion(packageJsonPath: string, name: string): Promise<void> {
+  const summary = buildInstalledPackagesSummary(packageJsonPath);
+  const row = findRow(summary, name);
+  if (!row?.canSwitch) {
+    return;
+  }
+
+  const metadata = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Fetching versions for ${name}`,
+    },
+    async () => fetchRegistryPackageVersions(summary.registryUrl, name),
+  );
+
+  const items = buildVersionQuickPickItems(metadata);
+  if (items.length === 0) {
+    await vscode.window.showErrorMessage(`JS Runner: no versions found for ${name}.`);
+    return;
+  }
+
+  const picked = await vscode.window.showQuickPick(items, {
+    title: `Add version of ${name}`,
+    placeHolder: 'Select a version to cache locally',
+    matchOnDescription: true,
+  });
+  if (!picked) {
+    return;
+  }
+
+  const packageDir = path.dirname(packageJsonPath);
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Caching ${name}@${picked.version}`,
+    },
+    async () => {
+      await installPackageVersionToCache(packageDir, name, picked.version, summary.registryUrl);
+    },
+  );
 }
 
 const openPanels = new Map<string, vscode.WebviewPanel>();
@@ -280,7 +445,13 @@ export function viewInstalledPackages(
     openPanels.delete(packageJsonPath);
   });
 
-  panel.webview.onDidReceiveMessage(async (message: { type: string; value?: string; path?: string }) => {
+  panel.webview.onDidReceiveMessage(async (message: {
+    type: string;
+    value?: string;
+    path?: string;
+    name?: string;
+    version?: string;
+  }) => {
     if (message.type === 'filter' && message.value) {
       currentFilter = message.value as DependencyType | 'all';
       updatePanel();
@@ -292,6 +463,28 @@ export function viewInstalledPackages(
         'revealInExplorer',
         vscode.Uri.file(message.path),
       );
+      return;
+    }
+
+    if (message.type === 'switchVersion' && message.name && message.version) {
+      try {
+        await handleSwitchVersion(packageJsonPath, message.name, message.version);
+      } catch (error) {
+        const text = error instanceof Error ? error.message : String(error);
+        await vscode.window.showErrorMessage(text);
+      }
+      updatePanel();
+      return;
+    }
+
+    if (message.type === 'addVersion' && message.name) {
+      try {
+        await handleAddVersion(packageJsonPath, message.name);
+      } catch (error) {
+        const text = error instanceof Error ? error.message : String(error);
+        await vscode.window.showErrorMessage(text);
+      }
+      updatePanel();
     }
   });
 

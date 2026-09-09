@@ -19,6 +19,8 @@ mocha.addFile(path.join(testsRoot, 'npmScriptDebug.test.js'));
 mocha.addFile(path.join(testsRoot, 'packageManager.test.js'));
 mocha.addFile(path.join(testsRoot, 'registryConfig.test.js'));
 mocha.addFile(path.join(testsRoot, 'installedPackagesPanel.test.js'));
+mocha.addFile(path.join(testsRoot, 'packageVersionCache.test.js'));
+mocha.addFile(path.join(testsRoot, 'registryClient.test.js'));
 mocha.addFile(path.join(testsRoot, 'npmScriptsProvider.test.js'));
 mocha.addFile(path.join(testsRoot, 'runningScriptsProvider.test.js'));
 mocha.addFile(path.join(testsRoot, 'languageInterpretersProvider.test.js'));
