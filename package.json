@@ -2,7 +2,7 @@
   "name": "js-runner-kit",
   "displayName": "JS Runner Kit",
   "description": "Run multiple JS scripts in parallel terminals + npm scripts sidebar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "jinkeli",
   "icon": "resources/icon.png",
   "engines": {
@@ -302,211 +302,281 @@
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f1",
-        "args": { "keyId": "f1" },
+        "args": {
+          "keyId": "f1"
+        },
         "when": "jsRunner.shortcut.f1"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f2",
-        "args": { "keyId": "f2" },
+        "args": {
+          "keyId": "f2"
+        },
         "when": "jsRunner.shortcut.f2"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f3",
-        "args": { "keyId": "f3" },
+        "args": {
+          "keyId": "f3"
+        },
         "when": "jsRunner.shortcut.f3"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f5",
-        "args": { "keyId": "f5" },
+        "args": {
+          "keyId": "f5"
+        },
         "when": "jsRunner.shortcut.f5"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f6",
-        "args": { "keyId": "f6" },
+        "args": {
+          "keyId": "f6"
+        },
         "when": "jsRunner.shortcut.f6"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f7",
-        "args": { "keyId": "f7" },
+        "args": {
+          "keyId": "f7"
+        },
         "when": "jsRunner.shortcut.f7"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f8",
-        "args": { "keyId": "f8" },
+        "args": {
+          "keyId": "f8"
+        },
         "when": "jsRunner.shortcut.f8"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f9",
-        "args": { "keyId": "f9" },
+        "args": {
+          "keyId": "f9"
+        },
         "when": "jsRunner.shortcut.f9"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f10",
-        "args": { "keyId": "f10" },
+        "args": {
+          "keyId": "f10"
+        },
         "when": "jsRunner.shortcut.f10"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f11",
-        "args": { "keyId": "f11" },
+        "args": {
+          "keyId": "f11"
+        },
         "when": "jsRunner.shortcut.f11"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "f12",
-        "args": { "keyId": "f12" },
+        "args": {
+          "keyId": "f12"
+        },
         "when": "jsRunner.shortcut.f12"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f1",
-        "args": { "keyId": "ctrl+alt+f1" },
+        "args": {
+          "keyId": "ctrl+alt+f1"
+        },
         "when": "jsRunner.shortcut.ctrlAltF1"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f2",
-        "args": { "keyId": "ctrl+alt+f2" },
+        "args": {
+          "keyId": "ctrl+alt+f2"
+        },
         "when": "jsRunner.shortcut.ctrlAltF2"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f3",
-        "args": { "keyId": "ctrl+alt+f3" },
+        "args": {
+          "keyId": "ctrl+alt+f3"
+        },
         "when": "jsRunner.shortcut.ctrlAltF3"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f4",
-        "args": { "keyId": "ctrl+alt+f4" },
+        "args": {
+          "keyId": "ctrl+alt+f4"
+        },
         "when": "jsRunner.shortcut.ctrlAltF4"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f5",
-        "args": { "keyId": "ctrl+alt+f5" },
+        "args": {
+          "keyId": "ctrl+alt+f5"
+        },
         "when": "jsRunner.shortcut.ctrlAltF5"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f6",
-        "args": { "keyId": "ctrl+alt+f6" },
+        "args": {
+          "keyId": "ctrl+alt+f6"
+        },
         "when": "jsRunner.shortcut.ctrlAltF6"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f7",
-        "args": { "keyId": "ctrl+alt+f7" },
+        "args": {
+          "keyId": "ctrl+alt+f7"
+        },
         "when": "jsRunner.shortcut.ctrlAltF7"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f8",
-        "args": { "keyId": "ctrl+alt+f8" },
+        "args": {
+          "keyId": "ctrl+alt+f8"
+        },
         "when": "jsRunner.shortcut.ctrlAltF8"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f9",
-        "args": { "keyId": "ctrl+alt+f9" },
+        "args": {
+          "keyId": "ctrl+alt+f9"
+        },
         "when": "jsRunner.shortcut.ctrlAltF9"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f10",
-        "args": { "keyId": "ctrl+alt+f10" },
+        "args": {
+          "keyId": "ctrl+alt+f10"
+        },
         "when": "jsRunner.shortcut.ctrlAltF10"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f11",
-        "args": { "keyId": "ctrl+alt+f11" },
+        "args": {
+          "keyId": "ctrl+alt+f11"
+        },
         "when": "jsRunner.shortcut.ctrlAltF11"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+alt+f12",
-        "args": { "keyId": "ctrl+alt+f12" },
+        "args": {
+          "keyId": "ctrl+alt+f12"
+        },
         "when": "jsRunner.shortcut.ctrlAltF12"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f1",
-        "args": { "keyId": "ctrl+shift+alt+f1" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f1"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF1"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f2",
-        "args": { "keyId": "ctrl+shift+alt+f2" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f2"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF2"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f3",
-        "args": { "keyId": "ctrl+shift+alt+f3" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f3"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF3"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f4",
-        "args": { "keyId": "ctrl+shift+alt+f4" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f4"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF4"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f5",
-        "args": { "keyId": "ctrl+shift+alt+f5" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f5"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF5"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f6",
-        "args": { "keyId": "ctrl+shift+alt+f6" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f6"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF6"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f7",
-        "args": { "keyId": "ctrl+shift+alt+f7" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f7"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF7"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f8",
-        "args": { "keyId": "ctrl+shift+alt+f8" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f8"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF8"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f9",
-        "args": { "keyId": "ctrl+shift+alt+f9" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f9"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF9"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f10",
-        "args": { "keyId": "ctrl+shift+alt+f10" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f10"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF10"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f11",
-        "args": { "keyId": "ctrl+shift+alt+f11" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f11"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF11"
       },
       {
         "command": "jsRunner.runNpmScriptByShortcut",
         "key": "ctrl+shift+alt+f12",
-        "args": { "keyId": "ctrl+shift+alt+f12" },
+        "args": {
+          "keyId": "ctrl+shift+alt+f12"
+        },
         "when": "jsRunner.shortcut.ctrlShiftAltF12"
       }
     ],
