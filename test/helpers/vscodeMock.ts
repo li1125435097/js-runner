@@ -92,6 +92,7 @@ export interface VscodeMock {
   };
   env: {
     openExternal: sinon.SinonStub;
+    appName: string;
   };
   workspace: {
     workspaceFolders: Array<{ uri: { fsPath: string }; name: string }>;
@@ -123,6 +124,7 @@ export interface VscodeMock {
     __closeTerminal: (terminal: MockTerminal) => void;
   };
   ProgressLocation: { SourceControl: number; Window: number; Notification: number };
+  QuickPickItemKind: { Default: number; Separator: number };
   commands: {
     executeCommand: sinon.SinonStub;
     registerCommand: sinon.SinonStub;
@@ -181,6 +183,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     },
     env: {
       openExternal: sinon.stub().resolves(true),
+      appName: 'Cursor',
     },
     workspace: {
       workspaceFolders: options.workspaceFolders ?? [],
@@ -280,6 +283,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
       Window: 10,
       Notification: 15,
     },
+    QuickPickItemKind: { Default: 0, Separator: -1 },
     __configurationStore: configurationStore,
   };
 

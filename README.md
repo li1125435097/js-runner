@@ -22,6 +22,7 @@ A VS Code / Cursor extension for running source files and npm scripts in paralle
 - **Install dependencies** — One-click install in a dedicated terminal; optionally wipe existing `node_modules` first
 - **View installed packages** — Webview table of declared vs installed versions; switch among locally cached versions from a dropdown, or add another version from the registry without changing `package.json`
 - **Debug NPM scripts** — Inline debug button on Node/JS-related scripts (vite, tsx, node, etc.); launches the VS Code JavaScript Debugger with breakpoints when possible
+- **Script shortcuts** — Keyboard icon on each npm script; pick an unused F-key or recommended combination, or enter a custom keybinding with conflict detection
 - **Running Scripts sidebar** — Lists active terminals; click to focus or stop individual runs
 - **Language Interpreters sidebar** — Lists supported languages and interpreter paths; add, edit, or remove entries
 
@@ -42,7 +43,7 @@ Open the **JS Runner** activity bar icon to access:
 
 | View | Description |
 |------|-------------|
-| **NPM Scripts** | Workspace npm scripts grouped by `package.json`; search, pin, run, debug, and manage packages |
+| **NPM Scripts** | Workspace npm scripts grouped by `package.json`; search, pin, run, debug, bind shortcuts, and manage packages |
 | **Running Scripts** | Terminals currently tracked by the extension; click a row to focus its terminal |
 | **Language Interpreters** | Language → interpreter mapping used when running files |
 
@@ -70,6 +71,8 @@ Each package group contains scripts plus a **Package Manager** section:
 | Refresh NPM Scripts | — | Rescan workspace for `package.json` scripts |
 | Run NPM Script | — | Run a script from the NPM Scripts sidebar |
 | Debug NPM Script | — | Debug a JS-related script from the NPM Scripts sidebar |
+| Set Script Shortcut | — | Bind a key to run an npm script from the sidebar |
+| Run NPM Script (Shortcut) | assigned key | Run the npm script bound to that shortcut |
 | Select Package Manager | — | Choose the CLI used to run/install for a package |
 | Select Registry | — | Choose the npm registry for install |
 | Install Dependencies | — | Install dependencies for a package |
@@ -78,7 +81,7 @@ Each package group contains scripts plus a **Package Manager** section:
 | Edit Language Interpreter | — | Edit label or path for an existing entry |
 | Remove Language Interpreter | — | Remove an interpreter entry |
 
-Shortcuts appear only when the current editor language has a matching interpreter (`jsRunner.canRunCurrentFile`).
+Shortcuts appear only when the current editor language has a matching interpreter (`jsRunner.canRunCurrentFile`). Per-script shortcuts work globally once assigned.
 
 ## Search and pin
 
@@ -110,6 +113,18 @@ Unpin with the filled pin icon. Change the color in user or workspace settings:
 ```
 
 You can also override the theme color `jsRunner.pinnedForeground` via `workbench.colorCustomizations`.
+
+### Script shortcuts
+
+Click the **keyboard** icon on a script row (after Run / Debug). A dropdown lists:
+
+- Unused function keys (F1–F12 that are not already taken)
+- Recommended combinations (`Ctrl+Alt+F1`–`F12`, then `Ctrl+Shift+Alt+F1`–`F12`)
+- **Custom...** — type a VS Code keybinding such as `ctrl+shift+b`
+
+Conflicts are checked against this extension (including F4 / Ctrl+F4), other script bindings, your user `keybindings.json`, and common VS Code defaults. Reserved keys are blocked; other conflicts ask for confirmation. Bindings are stored in workspace state. Catalog keys use a `when` clause so they do not steal the key until assigned. Custom keys are added to your user `keybindings.json` the same way.
+
+The assigned shortcut is shown on the script row (`Ctrl+Alt+F5 · <command>`).
 
 ## Package Manager
 
@@ -334,7 +349,7 @@ Language extensions can register their own IDs (for example `vue`, `svelte`). Us
 
 ## Keybinding note
 
-F4 and Ctrl+F4 override VS Code's default debug shortcuts when the current file has a configured interpreter. Remap them in **Keyboard Shortcuts** if needed.
+F4 and Ctrl+F4 override VS Code's default debug shortcuts when the current file has a configured interpreter. Remap them in **Keyboard Shortcuts** if needed. Per-script shortcuts are assigned from the NPM Scripts view and are not offered on F4 or Ctrl+F4.
 
 ## Development
 
@@ -378,6 +393,7 @@ MIT
 - **安装依赖** — 一键在独立终端中安装；可选先删除已有 `node_modules`
 - **查看已安装包** — Webview 对照声明版本与已安装版本；可用下拉切换本地缓存的多版本，或从 registry 再缓存一版，且不改 `package.json`
 - **调试 NPM 脚本** — 对 Node/JS 相关脚本（vite、tsx、node 等）显示行内调试按钮；尽可能以 VS Code JavaScript Debugger 启动并保留断点
+- **脚本快捷键** — 每条 npm 脚本行有键盘图标；可选择未占用的 F 键或推荐组合，也可自定义输入，并检测冲突
 - **Running Scripts 侧边栏** — 列出活跃终端；点击聚焦或停止单个运行
 - **Language Interpreters 侧边栏** — 列出语言与解释器路径；可添加、编辑或删除
 
@@ -398,7 +414,7 @@ npm run install:plugin
 
 | 视图 | 说明 |
 |------|------|
-| **NPM Scripts** | 按 `package.json` 分组的工作区 npm 脚本；可搜索、置顶、运行、调试并管理包 |
+| **NPM Scripts** | 按 `package.json` 分组的工作区 npm 脚本；可搜索、置顶、运行、调试、绑定快捷键并管理包 |
 | **Running Scripts** | 扩展追踪的终端；点击行可聚焦对应终端 |
 | **Language Interpreters** | 运行文件时使用的语言 → 解释器映射 |
 
@@ -426,6 +442,8 @@ npm run install:plugin
 | Refresh NPM Scripts | — | 重新扫描工作区 `package.json` 脚本 |
 | Run NPM Script | — | 从 NPM Scripts 侧边栏运行脚本 |
 | Debug NPM Script | — | 从 NPM Scripts 侧边栏调试 JS 相关脚本 |
+| Set Script Shortcut | — | 为脚本绑定运行快捷键 |
+| Run NPM Script (Shortcut) | 已绑定的键 | 运行绑定到该快捷键的 npm 脚本 |
 | Select Package Manager | — | 为某个包选择运行/安装用的 CLI |
 | Select Registry | — | 选择安装用的 npm registry |
 | Install Dependencies | — | 为某个包安装依赖 |
@@ -434,7 +452,7 @@ npm run install:plugin
 | Edit Language Interpreter | — | 编辑已有条目的 label 或 path |
 | Remove Language Interpreter | — | 删除解释器条目 |
 
-仅当当前编辑器语言有匹配解释器时，快捷键才生效（`jsRunner.canRunCurrentFile`）。
+仅当当前编辑器语言有匹配解释器时，F4 / Ctrl+F4 才生效（`jsRunner.canRunCurrentFile`）。脚本快捷键一旦绑定即可全局使用。
 
 ## 搜索与置顶
 
@@ -466,6 +484,18 @@ npm run install:plugin
 ```
 
 也可通过 `workbench.colorCustomizations` 覆盖主题色 `jsRunner.pinnedForeground`。
+
+### 脚本快捷键
+
+点击脚本行上的 **键盘** 图标（在运行 / 调试按钮之后）。下拉列表包括：
+
+- 未占用的功能键（F1–F12 中尚未被占用的）
+- 推荐组合（`Ctrl+Alt+F1`–`F12`，以及 `Ctrl+Shift+Alt+F1`–`F12`）
+- **Custom...** — 输入 VS Code 键语法，例如 `ctrl+shift+b`
+
+冲突检测覆盖本扩展（含 F4 / Ctrl+F4）、其它脚本绑定、用户 `keybindings.json` 以及常见 VS Code 默认键。保留键会直接拒绝；其它冲突会要求确认。绑定保存在工作区状态中。目录键用 `when` 子句控制，未绑定前不抢键。自定义组合会写入用户 `keybindings.json`。
+
+脚本行会显示已绑定的快捷键（`Ctrl+Alt+F5 · <command>`）。
 
 ## 包管理
 
@@ -690,7 +720,7 @@ Windows 上若 `bash` 不在 `PATH` 中，可使用完整路径：
 
 ## 快捷键说明
 
-当当前文件已配置解释器时，F4 和 Ctrl+F4 会覆盖 VS Code 默认调试快捷键。可在 **键盘快捷方式** 中重新映射。
+当当前文件已配置解释器时，F4 和 Ctrl+F4 会覆盖 VS Code 默认调试快捷键。可在 **键盘快捷方式** 中重新映射。脚本快捷键在 NPM Scripts 视图中单独绑定，不会使用 F4 或 Ctrl+F4。
 
 ## 开发
 

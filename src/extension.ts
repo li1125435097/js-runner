@@ -3,6 +3,9 @@
  */
 import * as vscode from 'vscode';
 import { getInterpreterForLanguage } from './interpreter/interpreterConfig';
+import { getRelativePackageKey } from './packageManager/packageManagerConfig';
+import { promptSetNpmScriptShortcut } from './shortcuts/scriptShortcutPicker';
+import { ScriptShortcutStore } from './shortcuts/scriptShortcutStore';
 import { viewInstalledPackages } from './packageManager/installedPackagesPanel';
 import { LanguageInterpretersProvider } from './providers/languageInterpretersProvider';
 import { NpmScriptsProvider } from './providers/npmScriptsProvider';
@@ -74,7 +77,9 @@ export function activate(context: vscode.ExtensionContext): void {
   updateRunContext(vscode.window.activeTextEditor);
 
   const terminalManager = new TerminalManager();
+  const shortcutStore = new ScriptShortcutStore(context.workspaceState);
   const npmScriptsProvider = new NpmScriptsProvider(context.workspaceState);
+  void shortcutStore.activate();
   const runningScriptsProvider = new RunningScriptsProvider(terminalManager);
   const languageInterpretersProvider = new LanguageInterpretersProvider();
 
@@ -121,6 +126,7 @@ export function activate(context: vscode.ExtensionContext): void {
     runningScriptsView.onDidChangeSelection(() => void setPinnedListSelectionForeground(false)),
     languageInterpretersView.onDidChangeSelection(() => void setPinnedListSelectionForeground(false)),
     terminalManager,
+    shortcutStore,
     npmScriptsProvider,
     runningScriptsProvider,
     languageInterpretersProvider,
@@ -195,6 +201,40 @@ export function activate(context: vscode.ExtensionContext): void {
       (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {
         const script = resolveNpmScript(scriptOrItem);
         void terminalManager.debugNpmScript(script.name, script.packageJsonPath, script.command);
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.setNpmScriptShortcut',
+      (scriptOrItem: NpmScriptInfo | ScriptTreeItem) => {
+        const script = resolveNpmScript(scriptOrItem);
+        const packageKey = getRelativePackageKey(script.packageJsonPath);
+        void promptSetNpmScriptShortcut(script, packageKey, shortcutStore).then((result) => {
+          if (result === 'assigned' || result === 'cleared') {
+            npmScriptsProvider.reloadShortcuts();
+          }
+        });
+      },
+    ),
+    vscode.commands.registerCommand(
+      'jsRunner.runNpmScriptByShortcut',
+      (args?: { keyId?: string } | string) => {
+        const keyId = typeof args === 'string' ? args : args?.keyId;
+        if (!keyId) {
+          return;
+        }
+        const binding = shortcutStore.getMap()[keyId];
+        if (!binding) {
+          void vscode.window.showErrorMessage('JS Runner: no npm script is bound to that shortcut.');
+          return;
+        }
+        const script = npmScriptsProvider.findNpmScript(binding.packageKey, binding.scriptName);
+        if (!script) {
+          void vscode.window.showErrorMessage(
+            `JS Runner: npm script "${binding.scriptName}" is no longer in this workspace.`,
+          );
+          return;
+        }
+        terminalManager.runNpmScript(script.name, script.packageJsonPath);
       },
     ),
     vscode.commands.registerCommand(

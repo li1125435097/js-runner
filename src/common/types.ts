@@ -212,11 +212,13 @@ export class ScriptSearchItem extends vscode.TreeItem {
 
 /** npm scripts 树视图中的单个 script 节点，点击即可运行 */
 export class ScriptTreeItem extends vscode.TreeItem {
-  constructor(public readonly script: NpmScriptInfo, pinned = false) {
+  constructor(public readonly script: NpmScriptInfo, pinned = false, shortcutLabel?: string) {
     super(script.name, vscode.TreeItemCollapsibleState.None);
     this.id = `script:${script.packageJsonPath}:${script.name}`;
-    this.description = script.command;
-    this.tooltip = `${script.packageManager} run ${script.name}\n${script.command}`;
+    this.description = shortcutLabel ? `${shortcutLabel} · ${script.command}` : script.command;
+    this.tooltip = shortcutLabel
+      ? `${script.packageManager} run ${script.name}\n${script.command}\nShortcut: ${shortcutLabel}`
+      : `${script.packageManager} run ${script.name}\n${script.command}`;
     this.iconPath = new vscode.ThemeIcon(
       'play',
       pinned ? pinnedForegroundThemeColor() : undefined,

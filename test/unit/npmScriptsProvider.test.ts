@@ -290,6 +290,33 @@ describe('NpmScriptsProvider', () => {
     provider.dispose();
   });
 
+  it('shows assigned shortcut labels on scripts and finds them by package key', async () => {
+    const vscodeMock = createVscodeMock({
+      workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],
+      workspaceFiles: [{ fsPath: rootPackageJson }],
+    });
+    const { NpmScriptsProvider } = loadNpmScriptsProviderModule(vscodeMock, fs);
+    const state = createWorkspaceState({
+      'jsRunner.scriptShortcuts': {
+        'ctrl+alt+f5': { packageKey: '.', scriptName: 'build', source: 'catalog' },
+      },
+    });
+    const provider = new NpmScriptsProvider(state);
+
+    await wait(30);
+    const [group] = getPackageGroups(provider);
+    const build = getScripts(provider, group).find((item) => item.label === 'build');
+    expect(build?.description).to.equal('Ctrl+Alt+F5 · echo build-ok');
+    expect(provider.findNpmScript('.', 'build')?.name).to.equal('build');
+
+    await state.update('jsRunner.scriptShortcuts', {});
+    provider.reloadShortcuts();
+    expect(getScripts(provider, group).find((item) => item.label === 'build')?.description).to.equal(
+      'echo build-ok',
+    );
+    provider.dispose();
+  });
+
   it('pins packages to the top and restores label order on unpin', async () => {
     const vscodeMock = createVscodeMock({
       workspaceFolders: [{ uri: { fsPath: fixtureRoot }, name: 'workspace' }],

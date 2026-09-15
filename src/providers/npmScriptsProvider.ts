@@ -26,6 +26,12 @@ import {
   ScriptSearchItem,
   ScriptTreeItem,
 } from '../common/types';
+import {
+  SHORTCUTS_STATE_KEY,
+  ScriptShortcutMap,
+  findShortcutForScript,
+  formatKeyLabel,
+} from '../shortcuts/scriptShortcutKeys';
 
 type TreeElement =
   | ScriptSearchItem
@@ -149,11 +155,13 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
   private filterQuery = '';
   private pinnedKeys: string[] = [];
   private pinnedPackageKeys: string[] = [];
+  private shortcuts: ScriptShortcutMap = {};
 
   constructor(workspaceState?: vscode.Memento) {
     this.workspaceState = workspaceState;
     this.pinnedKeys = [...(workspaceState?.get<string[]>(PINNED_SCRIPTS_KEY, []) ?? [])];
     this.pinnedPackageKeys = [...(workspaceState?.get<string[]>(PINNED_PACKAGES_KEY, []) ?? [])];
+    this.shortcuts = { ...(workspaceState?.get<ScriptShortcutMap>(SHORTCUTS_STATE_KEY, {}) ?? {}) };
     this.filterQuery = (workspaceState?.get<string>(FILTER_QUERY_KEY, '') ?? '').trim();
     this.syncFilterContext();
     void this.scanScripts();
@@ -268,6 +276,21 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     this._onDidChangeTreeData.fire(undefined);
   }
 
+  reloadShortcuts(): void {
+    this.shortcuts = { ...(this.workspaceState?.get<ScriptShortcutMap>(SHORTCUTS_STATE_KEY, {}) ?? {}) };
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  findNpmScript(packageKey: string, scriptName: string): NpmScriptInfo | undefined {
+    for (const group of this.groups) {
+      if (getRelativePackageKey(group.packageJsonPath) !== packageKey) {
+        continue;
+      }
+      return group.scripts.find((script) => script.name === scriptName);
+    }
+    return undefined;
+  }
+
   refresh(): void {
     clearPackageManagerCacheForTest();
     void this.scanScripts();
@@ -299,7 +322,7 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
       }
       this.hydrateGroupDetails(group);
       const scripts = sortScriptsWithPins(group.scripts, this.pinnedKeys).map(
-        (script) => new ScriptTreeItem(script, this.isPinned(script)),
+        (script) => new ScriptTreeItem(script, this.isPinned(script), this.shortcutLabel(script)),
       );
       return [new PackageManagerGroupItem(group), ...scripts];
     }
@@ -441,6 +464,15 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
 
   private isPinned(script: NpmScriptInfo): boolean {
     return this.pinnedKeys.includes(pinnedScriptKey(script.packageJsonPath, script.name));
+  }
+
+  private shortcutLabel(script: NpmScriptInfo): string | undefined {
+    const found = findShortcutForScript(
+      this.shortcuts,
+      getRelativePackageKey(script.packageJsonPath),
+      script.name,
+    );
+    return found ? formatKeyLabel(found.keyId) : undefined;
   }
 
   private isPackagePinned(packageJsonPath: string): boolean {

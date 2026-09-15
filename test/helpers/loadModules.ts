@@ -73,6 +73,7 @@ export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof 
       vscode: vscodeMock,
     }),
     '../packageManager/registryConfig': proxyquire.noCallThru()('../../packageManager/registryConfig', {}),
+    '../shortcuts/scriptShortcutKeys': require('../../shortcuts/scriptShortcutKeys'),
     fs,
   }) as {
     NpmScriptsProvider: new (workspaceState?: {
@@ -98,6 +99,11 @@ export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof 
       }) => Promise<void>;
       pinNpmPackage: (packageJsonPath: string) => Promise<void>;
       unpinNpmPackage: (packageJsonPath: string) => Promise<void>;
+      reloadShortcuts: () => void;
+      findNpmScript: (
+        packageKey: string,
+        scriptName: string,
+      ) => { name: string; command: string; packageJsonPath: string } | undefined;
       onDidChangeTreeData: (listener: (element: unknown) => void) => { dispose: () => void };
     };
     isInsideNodeModules: (fsPath: string) => boolean;

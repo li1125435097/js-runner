@@ -35,9 +35,11 @@ function loadTypes(vscodeMock: ReturnType<typeof createVscodeMock>) {
         packageManager: string;
       },
       pinned?: boolean,
+      shortcutLabel?: string,
     ) => {
       label?: string;
       description?: string;
+      tooltip?: string;
       contextValue?: string;
       command?: unknown;
       id?: string;
@@ -122,6 +124,10 @@ describe('types tree items', () => {
       command: 'jsRunner.runNpmScript',
       arguments: [script],
     });
+
+    const withShortcut = new ScriptTreeItem(script, false, 'Ctrl+Alt+F5');
+    expect(withShortcut.description).to.equal('Ctrl+Alt+F5 · tsc');
+    expect(String(withShortcut.tooltip)).to.include('Shortcut: Ctrl+Alt+F5');
   });
 
   it('marks non-js npm scripts without debug context', () => {

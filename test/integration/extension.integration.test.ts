@@ -31,6 +31,8 @@ suite('JS Runner extension integration', () => {
       'jsRunner.unpinNpmPackage',
       'jsRunner.runNpmScript',
       'jsRunner.debugNpmScript',
+      'jsRunner.setNpmScriptShortcut',
+      'jsRunner.runNpmScriptByShortcut',
       'jsRunner.selectPackageManager',
       'jsRunner.selectRegistry',
       'jsRunner.installDependencies',
