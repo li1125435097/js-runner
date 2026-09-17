@@ -163,7 +163,47 @@ export async function selectRegistry(
   });
 }
 
-export async function installDependencies(item: unknown): Promise<void> {
+export async function applyPackageManagerSetting(
+  packageJsonPath: string,
+  manager: string,
+  refresh?: () => void,
+): Promise<void> {
+  const trimmed = manager.trim();
+  if (!trimmed) {
+    throw new Error('JS Runner: package manager is required.');
+  }
+  await savePackageManagerSettings(packageJsonPath, { manager: trimmed });
+  refresh?.();
+}
+
+export async function applyRegistrySetting(
+  packageJsonPath: string,
+  registry: string,
+  refresh?: () => void,
+): Promise<void> {
+  const trimmed = registry.trim();
+  if (!trimmed) {
+    throw new Error('JS Runner: registry is required.');
+  }
+
+  await savePackageManagerSettings(packageJsonPath, { registry: trimmed });
+  if (trimmed !== 'auto') {
+    if (/^https?:\/\//i.test(trimmed)) {
+      writeRegistryToNpmrc(path.dirname(packageJsonPath), trimmed);
+    } else {
+      const preset = REGISTRY_PRESETS.find((entry) => entry.id === trimmed);
+      if (preset) {
+        writeRegistryToNpmrc(path.dirname(packageJsonPath), preset.url);
+      }
+    }
+  }
+  refresh?.();
+}
+
+export async function installDependencies(
+  item: unknown,
+  options?: { skipConfirm?: boolean; wipe?: boolean },
+): Promise<void> {
   const packageJsonPath = resolvePackageJsonPath(item);
   const packageDir = path.dirname(packageJsonPath);
   const nodeModulesPath = path.join(packageDir, 'node_modules');
@@ -174,15 +214,19 @@ export async function installDependencies(item: unknown): Promise<void> {
   const registryUrl = resolveRegistryUrl(packageJsonPath, settings.registry, workspaceRoot);
 
   if (fs.existsSync(nodeModulesPath)) {
-    const confirm = await vscode.window.showWarningMessage(
-      'node_modules already exists. Delete existing dependencies and reinstall?',
-      { modal: true },
-      'Delete and Reinstall',
-    );
-    if (confirm !== 'Delete and Reinstall') {
+    const shouldWipe = options?.skipConfirm
+      ? Boolean(options.wipe)
+      : (await vscode.window.showWarningMessage(
+          'node_modules already exists. Delete existing dependencies and reinstall?',
+          { modal: true },
+          'Delete and Reinstall',
+        )) === 'Delete and Reinstall';
+    if (!options?.skipConfirm && !shouldWipe) {
       return;
     }
-    fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+    if (shouldWipe) {
+      fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+    }
   }
 
   writeRegistryToNpmrc(packageDir, registryUrl);

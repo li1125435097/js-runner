@@ -291,6 +291,42 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
     return undefined;
   }
 
+  findNpmScriptByPath(packageJsonPath: string, scriptName: string): NpmScriptInfo | undefined {
+    const group = this.groups.find((item) => item.packageJsonPath === packageJsonPath);
+    return group?.scripts.find((script) => script.name === scriptName);
+  }
+
+  listPackageGroups(): PackageGroup[] {
+    return [...this.groups];
+  }
+
+  listPinned(): {
+    scripts: Array<{ name: string; packageKey: string; packageJsonPath: string | undefined }>;
+    packages: Array<{ packageKey: string; packageJsonPath: string | undefined }>;
+  } {
+    const packageJsonPathForKey = (packageKey: string): string | undefined =>
+      this.groups.find((group) => getRelativePackageKey(group.packageJsonPath) === packageKey)
+        ?.packageJsonPath;
+
+    const scripts = this.pinnedKeys.map((key) => {
+      const separator = key.indexOf('::');
+      const packageKey = separator >= 0 ? key.slice(0, separator) : key;
+      const name = separator >= 0 ? key.slice(separator + 2) : '';
+      return {
+        name,
+        packageKey,
+        packageJsonPath: packageJsonPathForKey(packageKey),
+      };
+    });
+
+    const packages = this.pinnedPackageKeys.map((packageKey) => ({
+      packageKey,
+      packageJsonPath: packageJsonPathForKey(packageKey),
+    }));
+
+    return { scripts, packages };
+  }
+
   refresh(): void {
     clearPackageManagerCacheForTest();
     void this.scanScripts();

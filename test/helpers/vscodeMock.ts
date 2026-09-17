@@ -93,6 +93,7 @@ export interface VscodeMock {
   env: {
     openExternal: sinon.SinonStub;
     appName: string;
+    clipboard: { writeText: sinon.SinonStub };
   };
   workspace: {
     workspaceFolders: Array<{ uri: { fsPath: string }; name: string }>;
@@ -118,6 +119,7 @@ export interface VscodeMock {
     showErrorMessage: sinon.SinonStub;
     createWebviewPanel: sinon.SinonStub;
     registerFileDecorationProvider: sinon.SinonStub;
+    registerWebviewViewProvider: sinon.SinonStub;
     showQuickPick: sinon.SinonStub;
     withProgress: sinon.SinonStub;
     __createdTerminals: MockTerminal[];
@@ -128,6 +130,9 @@ export interface VscodeMock {
   commands: {
     executeCommand: sinon.SinonStub;
     registerCommand: sinon.SinonStub;
+  };
+  extensions: {
+    getExtension: sinon.SinonStub;
   };
   debug: {
     startDebugging: sinon.SinonStub;
@@ -184,6 +189,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     env: {
       openExternal: sinon.stub().resolves(true),
       appName: 'Cursor',
+      clipboard: { writeText: sinon.stub().resolves() },
     },
     workspace: {
       workspaceFolders: options.workspaceFolders ?? [],
@@ -260,6 +266,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
         onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
       })),
       registerFileDecorationProvider: sinon.stub().returns({ dispose: sinon.stub() }),
+      registerWebviewViewProvider: sinon.stub().returns({ dispose: sinon.stub() }),
       showQuickPick: sinon.stub().resolves(undefined),
       withProgress: sinon.stub().callsFake(async (_options: unknown, task: (progress: { report: () => void }) => unknown) => {
         return task({ report: () => undefined });
@@ -274,6 +281,9 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
     commands: {
       executeCommand: sinon.stub().resolves(undefined),
       registerCommand: sinon.stub().returns({ dispose: sinon.stub() }),
+    },
+    extensions: {
+      getExtension: sinon.stub().returns({ packageJSON: { version: '1.2.0' } }),
     },
     debug: {
       startDebugging: sinon.stub().resolves(true),

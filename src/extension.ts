@@ -3,11 +3,18 @@
  */
 import * as vscode from 'vscode';
 import { getInterpreterForLanguage } from './interpreter/interpreterConfig';
+import { CallLogStore } from './mcp/callLogStore';
+import { showMcpCallLogs } from './mcp/callLogsPanel';
+import { getMcpServerSettings } from './mcp/mcpConfig';
+import { McpClientRegistration } from './mcp/mcpClientRegistration';
+import { registerJsRunnerMcpServerDefinitionProvider } from './mcp/mcpServerDefinitionProvider';
+import { McpServerController, McpServerStatus } from './mcp/mcpServerController';
 import { getRelativePackageKey } from './packageManager/packageManagerConfig';
 import { promptSetNpmScriptShortcut } from './shortcuts/scriptShortcutPicker';
 import { ScriptShortcutStore } from './shortcuts/scriptShortcutStore';
 import { viewInstalledPackages } from './packageManager/installedPackagesPanel';
 import { LanguageInterpretersProvider } from './providers/languageInterpretersProvider';
+import { McpServerViewProvider } from './providers/mcpServerViewProvider';
 import { NpmScriptsProvider } from './providers/npmScriptsProvider';
 import {
   installDependencies,
@@ -72,7 +79,11 @@ function updateRunContext(editor: vscode.TextEditor | undefined): void {
   void vscode.commands.executeCommand('setContext', 'jsRunner.canRunCurrentFile', canRun);
 }
 
-export function activate(context: vscode.ExtensionContext): void {
+export interface JsRunnerExtensionApi {
+  getMcpStatus(): McpServerStatus;
+}
+
+export function activate(context: vscode.ExtensionContext): JsRunnerExtensionApi {
   markExtensionActive();
   updateRunContext(vscode.window.activeTextEditor);
 
@@ -82,6 +93,29 @@ export function activate(context: vscode.ExtensionContext): void {
   void shortcutStore.activate();
   const runningScriptsProvider = new RunningScriptsProvider(terminalManager);
   const languageInterpretersProvider = new LanguageInterpretersProvider();
+  const callLogStore = new CallLogStore(getMcpServerSettings().maxLogEntries);
+  const serverVersion = String(
+    vscode.extensions.getExtension('jinkeli.js-runner-kit')?.packageJSON?.version ?? '1.2.0',
+  );
+  const mcpController = new McpServerController(
+    {
+      terminalManager,
+      npmScriptsProvider,
+      shortcutStore,
+      extensionContext: context,
+    },
+    callLogStore,
+    serverVersion,
+  );
+  const mcpViewProvider = new McpServerViewProvider(mcpController, () => {
+    showMcpCallLogs(callLogStore, context);
+  });
+  const mcpClientRegistration = new McpClientRegistration(mcpController);
+  const mcpDefinitionProvider = registerJsRunnerMcpServerDefinitionProvider(
+    () => mcpController.getStatus(),
+    mcpController.onDidChangeStatus,
+    serverVersion,
+  );
 
   const npmScriptsView = vscode.window.createTreeView('npmScriptsView', {
     treeDataProvider: npmScriptsProvider,
@@ -130,6 +164,13 @@ export function activate(context: vscode.ExtensionContext): void {
     npmScriptsProvider,
     runningScriptsProvider,
     languageInterpretersProvider,
+    mcpController,
+    mcpClientRegistration,
+    ...(mcpDefinitionProvider ? [mcpDefinitionProvider] : []),
+    mcpViewProvider,
+    vscode.window.registerWebviewViewProvider(McpServerViewProvider.viewId, mcpViewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
     npmScriptsView,
     runningScriptsView,
     languageInterpretersView,
@@ -277,6 +318,12 @@ export function activate(context: vscode.ExtensionContext): void {
       },
     ),
   );
+
+  void mcpController.start();
+
+  return {
+    getMcpStatus: () => mcpController.getStatus(),
+  };
 }
 
 export function deactivate(): void {

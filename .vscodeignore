@@ -9,3 +9,4 @@ tsconfig.json
 **/*.ts
 node_modules/**
 release/**
+.js-runner/**

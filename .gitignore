@@ -143,3 +143,6 @@ test/**/*.js.map
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# .js-runner
+.js-runner/

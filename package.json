@@ -23,10 +23,17 @@
     "onView:npmScriptsView",
     "onView:runningScriptsView",
     "onView:languageInterpretersView",
+    "onView:mcpServerView",
     "workspaceContains:package.json"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "jsRunnerMcp",
+        "label": "JS Runner Kit MCP"
+      }
+    ],
     "commands": [
       {
         "command": "jsRunner.runCurrentFile",
@@ -165,6 +172,11 @@
         {
           "id": "languageInterpretersView",
           "name": "Language Interpreters"
+        },
+        {
+          "id": "mcpServerView",
+          "name": "MCP Server",
+          "type": "webview"
         }
       ]
     },
@@ -691,6 +703,34 @@
               }
             }
           }
+        },
+        "jsRunner.mcpServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the local MCP HTTP server so external clients can call JS Runner commands."
+        },
+        "jsRunner.mcpServer.port": {
+          "type": "number",
+          "default": 38888,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Preferred MCP server port. If occupied, the next free port up to 65535 is used."
+        },
+        "jsRunner.mcpServer.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional API key. Empty means no authentication. Clients should send Authorization: Bearer <key> or X-Api-Key."
+        },
+        "jsRunner.mcpServer.maxLogEntries": {
+          "type": "number",
+          "default": 100000,
+          "minimum": 1,
+          "description": "Maximum MCP call log entries. Older entries are dropped when the limit is exceeded."
+        },
+        "jsRunner.mcpServer.autoRegisterClient": {
+          "type": "boolean",
+          "default": true,
+          "description": "When the local MCP HTTP server starts, register it in Cursor (~/.cursor/mcp.json) or VS Code (MCP provider / user mcp.json) automatically."
         }
       }
     }

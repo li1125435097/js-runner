@@ -104,6 +104,15 @@ export function loadNpmScriptsProviderModule(vscodeMock: VscodeMock, fs: typeof 
         packageKey: string,
         scriptName: string,
       ) => { name: string; command: string; packageJsonPath: string } | undefined;
+      findNpmScriptByPath: (
+        packageJsonPath: string,
+        scriptName: string,
+      ) => { name: string; command: string; packageJsonPath: string } | undefined;
+      listPackageGroups: () => Array<{
+        packageJsonPath: string;
+        label: string;
+        scripts: Array<{ name: string; command: string; packageJsonPath: string }>;
+      }>;
       onDidChangeTreeData: (listener: (element: unknown) => void) => { dispose: () => void };
     };
     isInsideNodeModules: (fsPath: string) => boolean;

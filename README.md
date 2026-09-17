@@ -25,6 +25,7 @@ A VS Code / Cursor extension for running source files and npm scripts in paralle
 - **Script shortcuts** — Keyboard icon on each npm script; pick an unused F-key or recommended combination, or enter a custom keybinding with conflict detection
 - **Running Scripts sidebar** — Lists active terminals; click to focus or stop individual runs
 - **Language Interpreters sidebar** — Lists supported languages and interpreter paths; add, edit, or remove entries
+- **MCP Server** — Local HTTP MCP endpoint that exposes every JS Runner command to external clients, with a sidebar config panel and call logs
 
 ## Installation
 
@@ -46,6 +47,7 @@ Open the **JS Runner** activity bar icon to access:
 | **NPM Scripts** | Workspace npm scripts grouped by `package.json`; search, pin, run, debug, bind shortcuts, and manage packages |
 | **Running Scripts** | Terminals currently tracked by the extension; click a row to focus its terminal |
 | **Language Interpreters** | Language → interpreter mapping used when running files |
+| **MCP Server** | Enable/disable the local MCP HTTP server, set port and API key, and open call logs |
 
 Each package group contains scripts plus a **Package Manager** section:
 
@@ -55,6 +57,35 @@ Each package group contains scripts plus a **Package Manager** section:
 | **Registry** | Registry used for install (`auto` reads `.npmrc`, otherwise a preset or custom URL) |
 | **Install Dependencies** | Run `{manager} install` in a new terminal |
 | **View Installed Packages** | Open a webview of declared vs installed dependencies, with local version switching |
+
+## MCP Server
+
+The extension starts a local [Model Context Protocol](https://modelcontextprotocol.io/) HTTP server on `127.0.0.1` so Cursor, VS Code, or other MCP clients can call the same commands as the sidebar.
+
+Configure it in the **MCP Server** sidebar view:
+
+- **Enable** — On by default. Turning it off stops the server immediately
+- **Port** — Default `38888`. Changing the port restarts the server from that preferred port. If the port is in use, the server tries `port + 1` until `65535`. If none are free, status is `stop`
+- **API Key** — Empty by default (no auth). Generate a random 32-character key, or type your own. When set, clients must send `api-key`, `X-Api-Key`, or `Authorization: Bearer <key>`
+- **Call log limit** — Default 100,000 entries; older records are dropped. **View call logs** opens the table in the editor. Logs are in-memory and clear when the extension reloads
+- **MCP config** — Live JSON with the current port and API key, plus a **Copy** button
+
+An API key is recommended. The server is bound to localhost only, but any local process can call it when the key is empty.
+
+Example client config (same as the sidebar copy output):
+
+```json
+{
+    "js_runner_kit": {
+        "url": "http://127.0.0.1:38888/mcp",
+        "headers": {
+            "api-key": "YOUR_API_KEY"
+        }
+    }
+}
+```
+
+Omit `headers` when the API key is empty. If the preferred port was busy, use the endpoint shown in the sidebar (the actual bound port). Tools are named like `jsRunner_runNpmScript`; `jsRunner_listNpmScripts` and `jsRunner_listRunningScripts` help discover paths and terminal ids.
 
 ## Commands
 
@@ -396,6 +427,7 @@ MIT
 - **脚本快捷键** — 每条 npm 脚本行有键盘图标；可选择未占用的 F 键或推荐组合，也可自定义输入，并检测冲突
 - **Running Scripts 侧边栏** — 列出活跃终端；点击聚焦或停止单个运行
 - **Language Interpreters 侧边栏** — 列出语言与解释器路径；可添加、编辑或删除
+- **MCP Server** — 本机 HTTP MCP 服务，把全部 JS Runner 命令暴露给外部客户端，侧边栏可配置并查看调用记录
 
 ## 安装
 
@@ -417,6 +449,7 @@ npm run install:plugin
 | **NPM Scripts** | 按 `package.json` 分组的工作区 npm 脚本；可搜索、置顶、运行、调试、绑定快捷键并管理包 |
 | **Running Scripts** | 扩展追踪的终端；点击行可聚焦对应终端 |
 | **Language Interpreters** | 运行文件时使用的语言 → 解释器映射 |
+| **MCP Server** | 开关、端口、API Key，以及查看调用记录 |
 
 每个包分组下除 scripts 外还有 **Package Manager** 区域：
 
@@ -426,6 +459,35 @@ npm run install:plugin
 | **Registry** | 安装使用的源（`auto` 读取 `.npmrc`，否则为预设或自定义 URL） |
 | **Install Dependencies** | 在新终端中执行 `{manager} install` |
 | **View Installed Packages** | 打开已声明 vs 已安装依赖的 webview，并可切换本地缓存版本 |
+
+## MCP Server
+
+扩展会在 `127.0.0.1` 启动 [Model Context Protocol](https://modelcontextprotocol.io/) HTTP 服务，供 Cursor、VS Code 或其他 MCP 客户端调用与侧边栏相同的命令。
+
+在 **MCP Server** 侧边栏中配置：
+
+- **开关** — 默认开启；关闭后立即停服
+- **Port** — 默认 `38888`。修改后从该首选端口重启。若端口占用则 `port + 1`，直到 `65535`；仍无可用端口则状态为 `stop`
+- **API Key** — 默认为空（不鉴权）。可随机生成 32 位字符串，也可手输。设置后客户端需带 `api-key`、`X-Api-Key` 或 `Authorization: Bearer <key>`
+- **记录条数上限** — 默认 10 万条，超出后滚动删除最旧记录。**查看调用记录** 在编辑器区打开表格。记录仅保存在内存中，扩展重载后清空
+- **MCP config** — 按当前端口和 API Key 动态生成 JSON，可一键复制
+
+建议设置 API Key。服务只绑定本机，但 Key 为空时本机任意进程都可调用。
+
+客户端配置示例（与侧边栏复制内容相同）：
+
+```json
+{
+    "js_runner_kit": {
+        "url": "http://127.0.0.1:38888/mcp",
+        "headers": {
+            "api-key": "YOUR_API_KEY"
+        }
+    }
+}
+```
+
+Key 为空时可省略 `headers`。若首选端口被占用，请使用侧边栏显示的实际地址。工具名形如 `jsRunner_runNpmScript`；可用 `jsRunner_listNpmScripts` 和 `jsRunner_listRunningScripts` 查询路径与终端 id。
 
 ## 命令
 

@@ -21,6 +21,16 @@ export function getPinnedForeground(): string {
   return raw && HEX_COLOR.test(raw) ? normalizeHex(raw) : DEFAULT_PINNED_FOREGROUND;
 }
 
+export function parsePinnedForegroundColor(value: string): string {
+  const trimmed = value.trim();
+  if (!HEX_COLOR.test(trimmed)) {
+    throw new Error(
+      `Invalid color "${trimmed}". Use a hex color such as ${DEFAULT_PINNED_FOREGROUND}.`,
+    );
+  }
+  return normalizeHex(trimmed);
+}
+
 export function pinnedForegroundThemeColor(): vscode.ThemeColor {
   return new vscode.ThemeColor(PINNED_FOREGROUND_COLOR_ID);
 }

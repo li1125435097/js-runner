@@ -28,6 +28,11 @@ mocha.addFile(path.join(testsRoot, 'scriptShortcutStore.test.js'));
 mocha.addFile(path.join(testsRoot, 'scriptShortcutPicker.test.js'));
 mocha.addFile(path.join(testsRoot, 'runningScriptsProvider.test.js'));
 mocha.addFile(path.join(testsRoot, 'languageInterpretersProvider.test.js'));
+mocha.addFile(path.join(testsRoot, 'callLogStore.test.js'));
+mocha.addFile(path.join(testsRoot, 'mcpConfig.test.js'));
+mocha.addFile(path.join(testsRoot, 'mcpGlobalConfigFile.test.js'));
+mocha.addFile(path.join(testsRoot, 'toolRegistry.test.js'));
+mocha.addFile(path.join(testsRoot, 'mcpHttpServer.test.js'));
 
 mocha.run((failures) => {
   process.exit(failures > 0 ? 1 : 0);
