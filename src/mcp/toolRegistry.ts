@@ -162,7 +162,8 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   {
     name: 'jsRunner_setNpmScriptShortcut',
     commandId: 'jsRunner.setNpmScriptShortcut',
-    description: 'Bind a keyboard shortcut keyId to an npm script without opening the picker UI.',
+    description:
+      'Bind a keyboard shortcut keyId to run an npm script without opening the picker UI. Also binds Shift+keyId to debug when that script is JS-debuggable and the Shift key is free.',
     inputSchema: objectSchema(
       {
         name: stringProp('Script name'),
@@ -175,7 +176,8 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   {
     name: 'jsRunner_runNpmScriptByShortcut',
     commandId: 'jsRunner.runNpmScriptByShortcut',
-    description: 'Run the npm script bound to a shortcut keyId.',
+    description:
+      'Run the npm script bound to a shortcut keyId, or debug it when that keyId is a Shift debug companion.',
     inputSchema: objectSchema(
       { keyId: stringProp('Shortcut key id such as f5') },
       ['keyId'],

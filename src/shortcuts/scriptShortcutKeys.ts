@@ -6,6 +6,7 @@ export const SHORTCUTS_STATE_KEY = 'jsRunner.scriptShortcuts';
 export const SHORTCUT_RUN_COMMAND = 'jsRunner.runNpmScriptByShortcut';
 
 export type ShortcutSource = 'catalog' | 'custom';
+export type ShortcutAction = 'run' | 'debug';
 export type CatalogGroup = 'function' | 'recommended' | 'recommendedExtra';
 export type OccupancyKind = 'free' | 'reserved' | 'script' | 'user' | 'default';
 
@@ -13,6 +14,12 @@ export interface ScriptShortcutBinding {
   packageKey: string;
   scriptName: string;
   source: ShortcutSource;
+  /** Missing on older workspace state; treated as run. */
+  action?: ShortcutAction;
+}
+
+export interface AssignShortcutOptions {
+  pairDebug?: boolean;
 }
 
 export type ScriptShortcutMap = Record<string, ScriptShortcutBinding>;
@@ -33,7 +40,12 @@ export interface UserKeybinding {
 export interface ShortcutStoreLike {
   getMap(): ScriptShortcutMap;
   listUserBindings(): UserKeybinding[];
-  assign(keyId: string, packageKey: string, scriptName: string): Promise<void>;
+  assign(
+    keyId: string,
+    packageKey: string,
+    scriptName: string,
+    options?: AssignShortcutOptions,
+  ): Promise<void>;
   clearForScript(packageKey: string, scriptName: string): Promise<void>;
 }
 
@@ -257,6 +269,23 @@ export function parseKeybinding(
   return { ok: true, keyId: [...modifiers, key].join('+') };
 }
 
+/** Insert Shift into a keybinding. Returns undefined if the key already includes Shift. */
+export function withShiftModifier(keyId: string): string | undefined {
+  const parsed = parseKeybinding(keyId);
+  if (!parsed.ok) {
+    return undefined;
+  }
+  if (parsed.keyId.split('+').includes('shift')) {
+    return undefined;
+  }
+  const shifted = parseKeybinding(`shift+${parsed.keyId}`);
+  return shifted.ok ? shifted.keyId : undefined;
+}
+
+export function isRunShortcut(binding: ScriptShortcutBinding): boolean {
+  return binding.action !== 'debug';
+}
+
 function buildCatalog(): CatalogKey[] {
   const keys: CatalogKey[] = [];
   for (let index = 1; index <= 12; index += 1) {
@@ -373,11 +402,47 @@ export function findShortcutForScript(
   scriptName: string,
 ): { keyId: string; binding: ScriptShortcutBinding } | undefined {
   for (const [keyId, binding] of Object.entries(bindings)) {
-    if (binding.packageKey === packageKey && binding.scriptName === scriptName) {
+    if (
+      binding.packageKey === packageKey &&
+      binding.scriptName === scriptName &&
+      isRunShortcut(binding)
+    ) {
       return { keyId, binding };
     }
   }
   return undefined;
+}
+
+export function findDebugShortcutForScript(
+  bindings: ScriptShortcutMap,
+  packageKey: string,
+  scriptName: string,
+): { keyId: string; binding: ScriptShortcutBinding } | undefined {
+  for (const [keyId, binding] of Object.entries(bindings)) {
+    if (
+      binding.packageKey === packageKey &&
+      binding.scriptName === scriptName &&
+      binding.action === 'debug'
+    ) {
+      return { keyId, binding };
+    }
+  }
+  return undefined;
+}
+
+export function removeShortcutsForScript(
+  bindings: ScriptShortcutMap,
+  packageKey: string,
+  scriptName: string,
+): boolean {
+  let removed = false;
+  for (const [keyId, binding] of Object.entries(bindings)) {
+    if (binding.packageKey === packageKey && binding.scriptName === scriptName) {
+      delete bindings[keyId];
+      removed = true;
+    }
+  }
+  return removed;
 }
 
 export function catalogKeysForPicker(

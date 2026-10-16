@@ -103,7 +103,7 @@ Omit `headers` when the API key is empty. If the preferred port was busy, use th
 | Run NPM Script | — | Run a script from the NPM Scripts sidebar |
 | Debug NPM Script | — | Debug a JS-related script from the NPM Scripts sidebar |
 | Set Script Shortcut | — | Bind a key to run an npm script from the sidebar |
-| Run NPM Script (Shortcut) | assigned key | Run the npm script bound to that shortcut |
+| Run NPM Script (Shortcut) | assigned key | Run the npm script bound to that shortcut (Shift companion debugs when paired) |
 | Select Package Manager | — | Choose the CLI used to run/install for a package |
 | Select Registry | — | Choose the npm registry for install |
 | Install Dependencies | — | Install dependencies for a package |
@@ -155,7 +155,9 @@ Click the **keyboard** icon on a script row (after Run / Debug). A dropdown list
 
 Conflicts are checked against this extension (including F4 / Ctrl+F4), other script bindings, your user `keybindings.json`, and common VS Code defaults. Reserved keys are blocked; other conflicts ask for confirmation. Bindings are stored in workspace state. Catalog keys use a `when` clause so they do not steal the key until assigned. Custom keys are added to your user `keybindings.json` the same way.
 
-The assigned shortcut is shown on the script row (`Ctrl+Alt+F5 · <command>`).
+If the script can be debugged (the Debug button is shown on that row) and **Shift+the assigned key** is still free, JS Runner also binds that Shift combination to debug the same script. Occupied Shift keys (another script, your keybindings, or a common VS Code default such as Shift+F5) are left alone. Keys that already include Shift are not paired.
+
+The assigned shortcut is shown on the script row (`Ctrl+Alt+F5 · <command>`, or `F7 / Shift+F7` when debug is paired).
 
 ## Package Manager
 

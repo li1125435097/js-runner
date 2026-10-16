@@ -29,6 +29,7 @@ import {
 import {
   SHORTCUTS_STATE_KEY,
   ScriptShortcutMap,
+  findDebugShortcutForScript,
   findShortcutForScript,
   formatKeyLabel,
 } from '../shortcuts/scriptShortcutKeys';
@@ -503,12 +504,16 @@ export class NpmScriptsProvider implements vscode.TreeDataProvider<TreeElement>,
   }
 
   private shortcutLabel(script: NpmScriptInfo): string | undefined {
-    const found = findShortcutForScript(
-      this.shortcuts,
-      getRelativePackageKey(script.packageJsonPath),
-      script.name,
-    );
-    return found ? formatKeyLabel(found.keyId) : undefined;
+    const packageKey = getRelativePackageKey(script.packageJsonPath);
+    const found = findShortcutForScript(this.shortcuts, packageKey, script.name);
+    if (!found) {
+      return undefined;
+    }
+    const debug = findDebugShortcutForScript(this.shortcuts, packageKey, script.name);
+    if (debug) {
+      return `${formatKeyLabel(found.keyId)} / ${formatKeyLabel(debug.keyId)}`;
+    }
+    return formatKeyLabel(found.keyId);
   }
 
   private isPackagePinned(packageJsonPath: string): boolean {

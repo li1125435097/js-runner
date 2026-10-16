@@ -298,7 +298,13 @@ describe('NpmScriptsProvider', () => {
     const { NpmScriptsProvider } = loadNpmScriptsProviderModule(vscodeMock, fs);
     const state = createWorkspaceState({
       'jsRunner.scriptShortcuts': {
-        'ctrl+alt+f5': { packageKey: '.', scriptName: 'build', source: 'catalog' },
+        'ctrl+alt+f5': { packageKey: '.', scriptName: 'build', source: 'catalog', action: 'run' },
+        'ctrl+shift+alt+f5': {
+          packageKey: '.',
+          scriptName: 'build',
+          source: 'catalog',
+          action: 'debug',
+        },
       },
     });
     const provider = new NpmScriptsProvider(state);
@@ -306,7 +312,7 @@ describe('NpmScriptsProvider', () => {
     await wait(30);
     const [group] = getPackageGroups(provider);
     const build = getScripts(provider, group).find((item) => item.label === 'build');
-    expect(build?.description).to.equal('Ctrl+Alt+F5 · echo build-ok');
+    expect(build?.description).to.equal('Ctrl+Alt+F5 / Ctrl+Shift+Alt+F5 · echo build-ok');
     expect(provider.findNpmScript('.', 'build')?.name).to.equal('build');
 
     await state.update('jsRunner.scriptShortcuts', {});

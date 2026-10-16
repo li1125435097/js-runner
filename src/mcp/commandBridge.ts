@@ -8,7 +8,7 @@ import {
   parsePinnedForegroundColor,
   syncPinnedForegroundColorCustomization,
 } from '../common/pinnedAppearance';
-import { NpmScriptInfo } from '../common/types';
+import { isJsNpmScript, NpmScriptInfo } from '../common/types';
 import { getInterpreters, saveInterpreters } from '../interpreter/interpreterConfig';
 import { viewInstalledPackages } from '../packageManager/installedPackagesPanel';
 import { getRelativePackageKey } from '../packageManager/packageManagerConfig';
@@ -128,7 +128,9 @@ export class CommandBridge {
         const script = this.resolveScript(args);
         const keyId = requiredString(args, 'keyId');
         const packageKey = getRelativePackageKey(script.packageJsonPath);
-        await this.deps.shortcutStore.assign(keyId, packageKey, script.name);
+        await this.deps.shortcutStore.assign(keyId, packageKey, script.name, {
+          pairDebug: isJsNpmScript(script.command),
+        });
         this.deps.npmScriptsProvider.reloadShortcuts();
         return { ok: true, keyId, packageKey, name: script.name };
       }
@@ -147,7 +149,15 @@ export class CommandBridge {
             `npm script "${binding.scriptName}" is no longer in this workspace.`,
           );
         }
-        this.deps.terminalManager.runNpmScript(script.name, script.packageJsonPath);
+        if (binding.action === 'debug') {
+          await this.deps.terminalManager.debugNpmScript(
+            script.name,
+            script.packageJsonPath,
+            script.command,
+          );
+        } else {
+          this.deps.terminalManager.runNpmScript(script.name, script.packageJsonPath);
+        }
         return { ok: true, keyId, name: script.name, packageJsonPath: script.packageJsonPath };
       }
       case 'jsRunner_focusRunningTerminal': {

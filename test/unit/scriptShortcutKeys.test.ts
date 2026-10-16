@@ -23,6 +23,23 @@ function loadKeys() {
     ) => { kind: string; scriptRef?: string; commandId?: string; label: string };
     isCatalogKey: (keyId: string) => boolean;
     parseKeybinding: (input: string) => { ok: boolean; keyId?: string; error?: string };
+    withShiftModifier: (keyId: string) => string | undefined;
+    findShortcutForScript: (
+      bindings: Record<
+        string,
+        { packageKey: string; scriptName: string; source: 'catalog' | 'custom'; action?: 'run' | 'debug' }
+      >,
+      packageKey: string,
+      scriptName: string,
+    ) => { keyId: string } | undefined;
+    findDebugShortcutForScript: (
+      bindings: Record<
+        string,
+        { packageKey: string; scriptName: string; source: 'catalog' | 'custom'; action?: 'run' | 'debug' }
+      >,
+      packageKey: string,
+      scriptName: string,
+    ) => { keyId: string } | undefined;
   };
 }
 
@@ -117,5 +134,28 @@ describe('scriptShortcutKeys', () => {
     expect(catalogKeysForPicker('recommended', input, 'ctrl+alt+f5').map((item) => item.keyId)).to.not.include(
       'ctrl+alt+f5',
     );
+  });
+
+  it('inserts shift into a keybinding and skips keys that already include it', () => {
+    const { withShiftModifier } = loadKeys();
+    expect(withShiftModifier('f7')).to.equal('shift+f7');
+    expect(withShiftModifier('ctrl+alt+f5')).to.equal('ctrl+shift+alt+f5');
+    expect(withShiftModifier('ctrl+shift+b')).to.equal(undefined);
+    expect(withShiftModifier('ctrl+shift+alt+f1')).to.equal(undefined);
+  });
+
+  it('finds the run shortcut and ignores the debug companion', () => {
+    const { findShortcutForScript, findDebugShortcutForScript } = loadKeys();
+    const bindings = {
+      'shift+f7': {
+        packageKey: '.',
+        scriptName: 'dev',
+        source: 'custom' as const,
+        action: 'debug' as const,
+      },
+      f7: { packageKey: '.', scriptName: 'dev', source: 'catalog' as const, action: 'run' as const },
+    };
+    expect(findShortcutForScript(bindings, '.', 'dev')?.keyId).to.equal('f7');
+    expect(findDebugShortcutForScript(bindings, '.', 'dev')?.keyId).to.equal('shift+f7');
   });
 });

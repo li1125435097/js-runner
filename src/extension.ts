@@ -285,6 +285,10 @@ export function activate(context: vscode.ExtensionContext): JsRunnerExtensionApi
           );
           return;
         }
+        if (binding.action === 'debug') {
+          void terminalManager.debugNpmScript(script.name, script.packageJsonPath, script.command);
+          return;
+        }
         terminalManager.runNpmScript(script.name, script.packageJsonPath);
       },
     ),

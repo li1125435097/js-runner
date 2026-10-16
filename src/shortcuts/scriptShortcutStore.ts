@@ -3,11 +3,14 @@
  */
 import * as vscode from 'vscode';
 import {
+  AssignShortcutOptions,
   SHORTCUTS_STATE_KEY,
   ScriptShortcutMap,
   contextKeyFor,
-  findShortcutForScript,
+  inspectKey,
   isCatalogKey,
+  removeShortcutsForScript,
+  withShiftModifier,
 } from './scriptShortcutKeys';
 import {
   KeybindingsFileAdapter,
@@ -40,17 +43,39 @@ export class ScriptShortcutStore {
     await this.syncContexts();
   }
 
-  async assign(keyId: string, packageKey: string, scriptName: string): Promise<void> {
+  async assign(
+    keyId: string,
+    packageKey: string,
+    scriptName: string,
+    options?: AssignShortcutOptions,
+  ): Promise<void> {
     const map = this.getMap();
-    const previous = findShortcutForScript(map, packageKey, scriptName);
-    if (previous) {
-      delete map[previous.keyId];
-    }
+    removeShortcutsForScript(map, packageKey, scriptName);
     map[keyId] = {
       packageKey,
       scriptName,
       source: isCatalogKey(keyId) ? 'catalog' : 'custom',
+      action: 'run',
     };
+
+    if (options?.pairDebug) {
+      const debugKeyId = withShiftModifier(keyId);
+      if (debugKeyId) {
+        const occupancy = inspectKey(debugKeyId, {
+          bindings: map,
+          userBindings: this.listUserBindings(),
+        });
+        if (occupancy.kind === 'free') {
+          map[debugKeyId] = {
+            packageKey,
+            scriptName,
+            source: isCatalogKey(debugKeyId) ? 'catalog' : 'custom',
+            action: 'debug',
+          };
+        }
+      }
+    }
+
     await this.workspaceState.update(SHORTCUTS_STATE_KEY, map);
     this.reconcileKeybindings();
     await this.syncContexts();
@@ -58,11 +83,9 @@ export class ScriptShortcutStore {
 
   async clearForScript(packageKey: string, scriptName: string): Promise<void> {
     const map = this.getMap();
-    const previous = findShortcutForScript(map, packageKey, scriptName);
-    if (!previous) {
+    if (!removeShortcutsForScript(map, packageKey, scriptName)) {
       return;
     }
-    delete map[previous.keyId];
     await this.workspaceState.update(SHORTCUTS_STATE_KEY, map);
     this.reconcileKeybindings();
     await this.syncContexts();

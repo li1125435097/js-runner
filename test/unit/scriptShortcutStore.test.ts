@@ -39,8 +39,16 @@ function loadStore(vscodeMock: ReturnType<typeof createVscodeMock>, adapter: Key
       state: ReturnType<typeof createWorkspaceState>,
       fileAdapter?: KeybindingsAdapter,
     ) => {
-      getMap: () => Record<string, { packageKey: string; scriptName: string; source: string }>;
-      assign: (keyId: string, packageKey: string, scriptName: string) => Promise<void>;
+      getMap: () => Record<
+        string,
+        { packageKey: string; scriptName: string; source: string; action?: string }
+      >;
+      assign: (
+        keyId: string,
+        packageKey: string,
+        scriptName: string,
+        options?: { pairDebug?: boolean },
+      ) => Promise<void>;
       clearForScript: (packageKey: string, scriptName: string) => Promise<void>;
       activate: () => Promise<void>;
       dispose: () => void;
@@ -111,6 +119,125 @@ describe('scriptShortcutStore', () => {
         false,
       ),
     ).to.be.true;
+
+    await store.clearForScript('.', 'dev');
+    expect(store.getMap()).to.deep.equal({});
+  });
+
+  it('pairs a free catalog Shift variant for debug without writing the user file', async () => {
+    const vscodeMock = createVscodeMock();
+    const writes: string[] = [];
+    const adapter = {
+      read: () => '[]',
+      write: (text: string) => {
+        writes.push(text);
+      },
+    };
+    const { ScriptShortcutStore } = loadStore(vscodeMock, adapter);
+    const store = new ScriptShortcutStore(createWorkspaceState(), adapter);
+
+    await store.assign('ctrl+alt+f5', '.', 'dev', { pairDebug: true });
+    expect(store.getMap()['ctrl+alt+f5']).to.deep.include({
+      scriptName: 'dev',
+      source: 'catalog',
+      action: 'run',
+    });
+    expect(store.getMap()['ctrl+shift+alt+f5']).to.deep.include({
+      scriptName: 'dev',
+      source: 'catalog',
+      action: 'debug',
+    });
+    expect(writes.some((text) => text.includes('ctrl+shift+alt+f5'))).to.be.false;
+    expect(
+      vscodeMock.commands.executeCommand.calledWith(
+        'setContext',
+        'jsRunner.shortcut.ctrlShiftAltF5',
+        true,
+      ),
+    ).to.be.true;
+  });
+
+  it('pairs a free custom Shift key into the user keybindings file', async () => {
+    const vscodeMock = createVscodeMock();
+    let contents = '[]';
+    const adapter = {
+      read: () => contents,
+      write: (text: string) => {
+        contents = text;
+      },
+    };
+    const { ScriptShortcutStore } = loadStore(vscodeMock, adapter);
+    const store = new ScriptShortcutStore(createWorkspaceState(), adapter);
+
+    await store.assign('f7', '.', 'dev', { pairDebug: true });
+    expect(store.getMap().f7?.action).to.equal('run');
+    expect(store.getMap()['shift+f7']).to.deep.include({
+      source: 'custom',
+      action: 'debug',
+    });
+    expect(contents).to.include('shift+f7');
+    expect(contents).to.include('jsRunner.shortcut.shiftF7');
+  });
+
+  it('does not pair Shift when occupied, already shifted, or pairDebug is off', async () => {
+    const vscodeMock = createVscodeMock();
+    const adapter = {
+      read: () => '[]',
+      write: () => undefined,
+    };
+    const { ScriptShortcutStore } = loadStore(vscodeMock, adapter);
+    const store = new ScriptShortcutStore(createWorkspaceState(), adapter);
+
+    await store.assign('f5', '.', 'dev', { pairDebug: true });
+    expect(store.getMap()['shift+f5']).to.equal(undefined);
+
+    await store.assign('ctrl+shift+b', '.', 'lint', { pairDebug: true });
+    expect(Object.keys(store.getMap()).filter((key) => store.getMap()[key].scriptName === 'lint')).to.deep.equal(
+      ['ctrl+shift+b'],
+    );
+
+    await store.assign('ctrl+alt+f6', '.', 'build');
+    expect(store.getMap()['ctrl+shift+alt+f6']).to.equal(undefined);
+
+    await store.assign('ctrl+shift+alt+f5', 'pkg', 'other');
+    await store.assign('ctrl+alt+f5', '.', 'dev', { pairDebug: true });
+    expect(store.getMap()['ctrl+shift+alt+f5']?.scriptName).to.equal('other');
+    expect(store.getMap()['ctrl+alt+f5']?.action).to.equal('run');
+  });
+
+  it('does not pair a Shift key already bound in the user keybindings file', async () => {
+    const vscodeMock = createVscodeMock();
+    const adapter = {
+      read: () => JSON.stringify([{ key: 'shift+f7', command: 'workbench.action.something' }]),
+      write: () => undefined,
+    };
+    const { ScriptShortcutStore } = loadStore(vscodeMock, adapter);
+    const store = new ScriptShortcutStore(createWorkspaceState(), adapter);
+
+    await store.assign('f7', '.', 'dev', { pairDebug: true });
+    expect(store.getMap().f7?.action).to.equal('run');
+    expect(store.getMap()['shift+f7']).to.equal(undefined);
+  });
+
+  it('replaces the previous run and debug pair and clears both', async () => {
+    const vscodeMock = createVscodeMock();
+    let contents = '[]';
+    const adapter = {
+      read: () => contents,
+      write: (text: string) => {
+        contents = text;
+      },
+    };
+    const { ScriptShortcutStore } = loadStore(vscodeMock, adapter);
+    const store = new ScriptShortcutStore(createWorkspaceState(), adapter);
+
+    await store.assign('f7', '.', 'dev', { pairDebug: true });
+    await store.assign('ctrl+alt+f5', '.', 'dev', { pairDebug: true });
+    expect(store.getMap().f7).to.equal(undefined);
+    expect(store.getMap()['shift+f7']).to.equal(undefined);
+    expect(store.getMap()['ctrl+alt+f5']?.action).to.equal('run');
+    expect(store.getMap()['ctrl+shift+alt+f5']?.action).to.equal('debug');
+    expect(contents).to.not.include('shift+f7');
 
     await store.clearForScript('.', 'dev');
     expect(store.getMap()).to.deep.equal({});

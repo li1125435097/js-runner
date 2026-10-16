@@ -21,7 +21,12 @@ function loadPicker(vscodeMock: ReturnType<typeof createVscodeMock>) {
   const keys = proxyquire.noCallThru()('../../shortcuts/scriptShortcutKeys', {});
   return proxyquire.noCallThru()('../../shortcuts/scriptShortcutPicker', {
     vscode: vscodeMock,
-    '../common/types': {},
+    '../common/types': {
+      isJsNpmScript: (command: string) =>
+        /\b(node|nodemon|tsx|ts-node|vite|next|nuxt|jest|mocha|webpack|rollup|esbuild|tsc|babel)\b/i.test(
+          command,
+        ),
+    },
     './scriptShortcutKeys': keys,
   }) as {
     promptSetNpmScriptShortcut: (
@@ -62,8 +67,26 @@ describe('scriptShortcutPicker', () => {
     const store = createStore();
     const result = await promptSetNpmScriptShortcut(script, '.', store);
     expect(result).to.equal('assigned');
-    expect(store.assign.calledWith('ctrl+alt+f5', '.', 'dev')).to.be.true;
+    expect(store.assign.calledWith('ctrl+alt+f5', '.', 'dev', { pairDebug: true })).to.be.true;
     expect(vscodeMock.window.showWarningMessage.called).to.be.false;
+  });
+
+  it('does not request debug pairing for a non-JS script', async () => {
+    const vscodeMock = createVscodeMock();
+    vscodeMock.window.showQuickPick.resolves({
+      action: 'key',
+      keyId: 'ctrl+alt+f5',
+      label: 'Ctrl+Alt+F5',
+    });
+    const { promptSetNpmScriptShortcut } = loadPicker(vscodeMock);
+    const store = createStore();
+    const result = await promptSetNpmScriptShortcut(
+      { ...script, name: 'lint', command: 'echo lint' },
+      '.',
+      store,
+    );
+    expect(result).to.equal('assigned');
+    expect(store.assign.calledWith('ctrl+alt+f5', '.', 'lint', { pairDebug: false })).to.be.true;
   });
 
   it('clears the current shortcut', async () => {
@@ -100,7 +123,7 @@ describe('scriptShortcutPicker', () => {
     const store = createStore();
     const result = await promptSetNpmScriptShortcut(script, '.', store);
     expect(result).to.equal('assigned');
-    expect(store.assign.calledWith('ctrl+shift+b', '.', 'dev')).to.be.true;
+    expect(store.assign.calledWith('ctrl+shift+b', '.', 'dev', { pairDebug: true })).to.be.true;
 
     const validate = vscodeMock.window.showInputBox.firstCall.args[0].validateInput as (
       value: string,

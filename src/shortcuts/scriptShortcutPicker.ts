@@ -2,12 +2,13 @@
  * 为 npm 脚本选择或自定义运行快捷键（QuickPick + Custom 输入）。
  */
 import * as vscode from 'vscode';
-import { NpmScriptInfo } from '../common/types';
+import { isJsNpmScript, NpmScriptInfo } from '../common/types';
 import {
   CatalogKey,
   OccupancyInput,
   ShortcutStoreLike,
   catalogKeysForPicker,
+  findDebugShortcutForScript,
   findShortcutForScript,
   formatKeyLabel,
   inspectKey,
@@ -31,13 +32,16 @@ export async function promptSetNpmScriptShortcut(
     userBindings: store.listUserBindings(),
   };
   const current = findShortcutForScript(occupancyInput.bindings, packageKey, script.name);
+  const currentDebug = findDebugShortcutForScript(occupancyInput.bindings, packageKey, script.name);
 
   const items: ShortcutPickItem[] = [];
   if (current) {
     items.push({
       action: 'keep',
       keyId: current.keyId,
-      label: formatKeyLabel(current.keyId),
+      label: currentDebug
+        ? `${formatKeyLabel(current.keyId)} (${formatKeyLabel(currentDebug.keyId)} debug)`
+        : formatKeyLabel(current.keyId),
       description: 'Currently assigned',
       picked: true,
     });
@@ -178,7 +182,9 @@ async function assignWithConfirm(
     }
   }
 
-  await store.assign(keyId, packageKey, script.name);
+  await store.assign(keyId, packageKey, script.name, {
+    pairDebug: isJsNpmScript(script.command),
+  });
   return 'assigned';
 }
 
