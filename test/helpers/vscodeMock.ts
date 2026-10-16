@@ -48,6 +48,37 @@ export class MockThemeIcon {
   constructor(public readonly id: string, public readonly color?: unknown) {}
 }
 
+export class MockPosition {
+  constructor(public readonly line: number, public readonly character: number) {}
+}
+
+export class MockRange {
+  readonly start: MockPosition;
+  readonly end: MockPosition;
+
+  constructor(
+    startOrLine: MockPosition | number,
+    endOrCharacter: MockPosition | number,
+    endLine?: number,
+    endCharacter?: number,
+  ) {
+    if (typeof startOrLine === 'number') {
+      this.start = new MockPosition(startOrLine, endOrCharacter as number);
+      this.end = new MockPosition(endLine ?? 0, endCharacter ?? 0);
+    } else {
+      this.start = startOrLine;
+      this.end = endOrCharacter as MockPosition;
+    }
+  }
+}
+
+export class MockCodeLens {
+  constructor(
+    public readonly range: MockRange,
+    public readonly command?: { title: string; command: string; arguments?: unknown[] },
+  ) {}
+}
+
 export interface MockTerminal {
   name: string;
   show: sinon.SinonStub;
@@ -85,6 +116,9 @@ export interface VscodeMock {
   TreeItemCollapsibleState: { None: number; Collapsed: number; Expanded: number };
   ViewColumn: { Active: number; Beside: number };
   EventEmitter: typeof MockEventEmitter;
+  Position: typeof MockPosition;
+  Range: typeof MockRange;
+  CodeLens: typeof MockCodeLens;
   ConfigurationTarget: { Global: number; Workspace: number; WorkspaceFolder: number };
   Uri: {
     file: (filePath: string) => { fsPath: string; toString: () => string };
@@ -102,8 +136,13 @@ export interface VscodeMock {
     createFileSystemWatcher: sinon.SinonStub;
     onDidChangeWorkspaceFolders: (listener: () => void) => { dispose: () => void };
     onDidChangeConfiguration: (listener: (event: { affectsConfiguration: (key: string) => boolean }) => void) => { dispose: () => void };
+    onDidChangeTextDocument: (listener: (event: { document: { uri: { fsPath: string } } }) => void) => { dispose: () => void };
     getConfiguration: sinon.SinonStub;
     __emitConfigurationChange: (section: string) => void;
+    __emitTextDocumentChange: (fsPath: string) => void;
+  };
+  languages: {
+    registerCodeLensProvider: sinon.SinonStub;
   };
   window: {
     activeTextEditor?: {
@@ -151,6 +190,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
 
   const workspaceFolderListener = new MockEventEmitter<void>();
   const configChangeEmitter = new MockEventEmitter<{ affectsConfiguration: (key: string) => boolean }>();
+  const textDocumentChangeEmitter = new MockEventEmitter<{ document: { uri: { fsPath: string } } }>();
 
   const mock = {
     TreeItem: MockTreeItem,
@@ -166,6 +206,9 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
       Beside: 2,
     },
     EventEmitter: MockEventEmitter,
+    Position: MockPosition,
+    Range: MockRange,
+    CodeLens: MockCodeLens,
     ConfigurationTarget: {
       Global: 1,
       Workspace: 2,
@@ -209,6 +252,7 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
       })),
       onDidChangeWorkspaceFolders: workspaceFolderListener.event.bind(workspaceFolderListener),
       onDidChangeConfiguration: configChangeEmitter.event.bind(configChangeEmitter),
+      onDidChangeTextDocument: textDocumentChangeEmitter.event.bind(textDocumentChangeEmitter),
       getConfiguration: sinon.stub().callsFake((section?: string) => ({
         get: <T>(key: string, defaultValue?: T): T => {
           const fullKey = section ? `${section}.${key}` : key;
@@ -234,6 +278,12 @@ export function createVscodeMock(options: VscodeMockOptions = {}): VscodeMock {
           affectsConfiguration: (key: string) => key === section || section.startsWith(key),
         });
       },
+      __emitTextDocumentChange: (fsPath: string) => {
+        textDocumentChangeEmitter.fire({ document: { uri: { fsPath } } });
+      },
+    },
+    languages: {
+      registerCodeLensProvider: sinon.stub().returns({ dispose: sinon.stub() }),
     },
     window: {
       activeTextEditor: options.activeTextEditor,

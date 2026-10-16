@@ -16,6 +16,7 @@ import { viewInstalledPackages } from './packageManager/installedPackagesPanel';
 import { LanguageInterpretersProvider } from './providers/languageInterpretersProvider';
 import { McpServerViewProvider } from './providers/mcpServerViewProvider';
 import { NpmScriptsProvider } from './providers/npmScriptsProvider';
+import { PackageJsonScriptsCodeLensProvider } from './providers/packageJsonScriptsCodeLensProvider';
 import {
   installDependencies,
   selectPackageManager,
@@ -132,6 +133,7 @@ export function activate(context: vscode.ExtensionContext): JsRunnerExtensionApi
   npmScriptsProvider.refresh();
   void syncPinnedForegroundColorCustomization();
   const decorationProvider = new PinnedDecorationProvider();
+  const packageJsonCodeLensProvider = new PackageJsonScriptsCodeLensProvider();
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -153,6 +155,14 @@ export function activate(context: vscode.ExtensionContext): JsRunnerExtensionApi
       }
     }),
     vscode.window.registerFileDecorationProvider(decorationProvider),
+    packageJsonCodeLensProvider,
+    vscode.languages.registerCodeLensProvider(
+      [
+        { language: 'json', pattern: '**/package.json' },
+        { language: 'jsonc', pattern: '**/package.json' },
+      ],
+      packageJsonCodeLensProvider,
+    ),
     npmScriptsView.onDidChangeSelection(() => syncPinnedPackageLabelColor(npmScriptsView)),
     npmScriptsView.onDidChangeVisibility(() => syncPinnedPackageLabelColor(npmScriptsView)),
     npmScriptsView.onDidExpandElement(() => syncPinnedPackageLabelColor(npmScriptsView)),

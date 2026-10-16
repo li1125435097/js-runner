@@ -167,6 +167,35 @@ export function loadLanguageInterpretersProviderModule(vscodeMock: VscodeMock) {
   };
 }
 
+export function loadPackageJsonScriptsCodeLensProviderModule(vscodeMock: VscodeMock) {
+  const locations = proxyquire.noCallThru()('../../providers/packageJsonScriptLocations', {});
+  return proxyquire.noCallThru()('../../providers/packageJsonScriptsCodeLensProvider', {
+    vscode: vscodeMock,
+    '../common/types': loadTypesModule(vscodeMock),
+    './npmScriptsProvider': {
+      isInsideNodeModules: (fsPath: string) => fsPath.split(/[/\\]/).includes('node_modules'),
+    },
+    './packageJsonScriptLocations': locations,
+  }) as {
+    PackageJsonScriptsCodeLensProvider: new () => {
+      provideCodeLenses: (document: {
+        getText: () => string;
+        uri: { fsPath: string };
+        positionAt: (offset: number) => { line: number; character: number };
+      }) => Array<{
+        range: { start: { line: number; character: number }; end: { line: number; character: number } };
+        command?: { title: string; command: string; arguments?: unknown[] };
+      }>;
+      onDidChangeCodeLenses: (listener: () => void) => { dispose: () => void };
+      dispose: () => void;
+    };
+    PACKAGE_JSON_RUN_LENS_TITLE: string;
+    PACKAGE_JSON_DEBUG_LENS_TITLE: string;
+    PACKAGE_JSON_CODELENS_SETTING: string;
+    isPackageJsonPath: (fsPath: string) => boolean;
+  };
+}
+
 export function loadNpmScriptDebugModule(vscodeMock: VscodeMock) {
   const packageManager = createPackageManagerStub(vscodeMock);
   return proxyquire.noCallThru()('../../terminal/npmScriptDebug', {

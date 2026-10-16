@@ -612,6 +612,11 @@
           "format": "color",
           "description": "Foreground color for pinned packages and scripts in the NPM Scripts view. Change this in user settings."
         },
+        "jsRunner.packageJsonCodeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Run and Debug CodeLens above each npm script when a package.json file is open. Requires Editor: Code Lens to be enabled."
+        },
         "jsRunner.packageManager": {
           "type": "string",
           "enum": [
